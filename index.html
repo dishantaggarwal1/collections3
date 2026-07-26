@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collections Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F3EA;
+  --paper-raised:#FFFFFF;
+  --ink:#26241E;
+  --ink-soft:#6B665A;
+  --rule:#DEDACB;
+  --rule-strong:#C9C3AE;
+  --brass:#8A6D2F;
+  --brass-soft:#E9DFC2;
+  --overdue:#A23B2E;
+  --overdue-soft:#F3E0DB;
+  --soon:#B0741A;
+  --soon-soft:#F3E6CC;
+  --ok:#3D6B4C;
+  --ok-soft:#DEE9E0;
+  --unset:#8A8474;
+  --unset-soft:#EDEADD;
+  --navy:#26344A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--brass-soft);}
+.wrap{max-width:1400px;margin:0 auto;padding:28px 24px 80px;}
+
+/* Header */
+.masthead{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  border-bottom:3px double var(--rule-strong);
+  padding-bottom:16px;margin-bottom:22px;
+  gap:20px;flex-wrap:wrap;
+}
+.masthead h1{
+  font-family:'Fraunces',serif;
+  font-optical-sizing:auto;
+  font-weight:600;
+  font-size:34px;
+  margin:0;
+  letter-spacing:-0.01em;
+}
+.masthead .eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--brass);
+  margin:0 0 4px;
+}
+.masthead .today{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;
+  color:var(--ink-soft);
+  text-align:right;
+}
+
+/* Stat cards */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;
+  margin-bottom:26px;
+}
+.stat{
+  background:var(--paper-raised);
+  border:1px solid var(--rule);
+  border-left:4px solid var(--ink);
+  padding:14px 16px;
+}
+.stat.overdue{border-left-color:var(--overdue);}
+.stat.soon{border-left-color:var(--soon);}
+.stat.ok{border-left-color:var(--ok);}
+.stat.brass{border-left-color:var(--brass);}
+.stat .num{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:28px;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.stat .label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-top:4px;
+}
+
+/* Toolbar */
+.toolbar{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  margin-bottom:14px;
+  padding:12px 14px;
+  background:var(--paper-raised);
+  border:1px solid var(--rule);
+}
+.toolbar input[type=search],
+.toolbar select{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  padding:8px 10px;
+  border:1px solid var(--rule-strong);
+  background:#fff;
+  color:var(--ink);
+  border-radius:2px;
+}
+.toolbar input[type=search]{flex:1;min-width:200px;}
+.toolbar .count{
+  margin-left:auto;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.btn{
+  font-family:'Inter',sans-serif;
+  font-size:12.5px;
+  font-weight:600;
+  padding:8px 13px;
+  border:1px solid var(--ink);
+  background:var(--ink);
+  color:var(--paper);
+  cursor:pointer;
+  border-radius:2px;
+  transition:opacity .15s;
+}
+.btn:hover{opacity:0.82;}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule-strong);}
+.btn.ghost:hover{background:var(--brass-soft);border-color:var(--brass);}
+.btn.small{padding:5px 9px;font-size:11.5px;}
+
+/* Table */
+.tablewrap{
+  background:var(--paper-raised);
+  border:1px solid var(--rule);
+  overflow-x:auto;
+}
+table{width:100%;border-collapse:collapse;min-width:1100px;}
+thead th{
+  position:sticky;top:0;
+  background:var(--navy);
+  color:#EDE9DA;
+  text-align:left;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:10px 12px;
+  cursor:pointer;
+  white-space:nowrap;
+  user-select:none;
+  border-bottom:2px solid var(--brass);
+}
+thead th:hover{background:#33455F;}
+thead th.sorted::after{content:" ▾";color:var(--brass-soft);}
+thead th.sorted.asc::after{content:" ▴";}
+tbody tr{
+  border-bottom:1px solid var(--rule);
+  transition:background .1s;
+}
+tbody tr:hover{background:#FBF8F0;}
+tbody tr.status-overdue{box-shadow:inset 4px 0 0 var(--overdue);}
+tbody tr.status-soon{box-shadow:inset 4px 0 0 var(--soon);}
+tbody tr.status-ok{box-shadow:inset 4px 0 0 var(--ok);}
+tbody tr.status-unset{box-shadow:inset 4px 0 0 var(--unset);}
+td{
+  padding:9px 12px;
+  font-size:13px;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+td.name{font-weight:600;white-space:normal;min-width:150px;}
+td.mono, .mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+td.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+.pill{
+  display:inline-block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:0.04em;
+  padding:2.5px 8px;
+  border-radius:20px;
+  text-transform:uppercase;
+  font-weight:600;
+}
+.pill.overdue{background:var(--overdue-soft);color:var(--overdue);}
+.pill.soon{background:var(--soon-soft);color:var(--soon);}
+.pill.ok{background:var(--ok-soft);color:var(--ok);}
+.pill.unset{background:var(--unset-soft);color:var(--unset);}
+input.due-edit{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  padding:4px 6px;
+  border:1px solid var(--rule-strong);
+  border-radius:2px;
+  background:#fff;
+  width:132px;
+}
+.rowactions{display:flex;gap:6px;}
+
+/* Modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(38,36,30,0.55);
+  display:none;align-items:center;justify-content:center;z-index:50;
+  padding:20px;
+}
+.overlay.show{display:flex;}
+.modal{
+  background:var(--paper-raised);
+  border:1px solid var(--rule-strong);
+  max-width:420px;width:100%;
+  padding:22px 24px;
+}
+.modal h2{
+  font-family:'Fraunces',serif;font-size:20px;margin:0 0 4px;
+}
+.modal .sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;}
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;
+  color:var(--ink-soft);margin-bottom:5px;
+}
+.field input, .field textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--rule-strong);
+  font-family:'Inter',sans-serif;font-size:13.5px;border-radius:2px;
+  background:#fff;
+}
+.field textarea{resize:vertical;min-height:50px;font-family:'Inter',sans-serif;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+
+/* History drawer */
+.history-list{max-height:60vh;overflow-y:auto;}
+.hist-row{
+  display:flex;justify-content:space-between;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--rule);
+  font-size:12.5px;
+}
+.hist-row .h-name{font-weight:600;}
+.hist-row .h-meta{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.hist-row .h-amt{font-family:'IBM Plex Mono',monospace;color:var(--ok);font-weight:600;}
+
+.empty-note{padding:40px;text-align:center;color:var(--ink-soft);font-size:13px;}
+.footnote{
+  margin-top:16px;font-size:11.5px;color:var(--ink-soft);
+  font-family:'IBM Plex Mono',monospace;
+}
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--paper);padding:10px 18px;
+  font-size:12.5px;border-radius:3px;opacity:0;pointer-events:none;
+  transition:all .25s;z-index:100;font-family:'IBM Plex Mono',monospace;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media (max-width:720px){
+  table{min-width:900px;}
+  .masthead{flex-direction:column;align-items:flex-start;}
+  .masthead .today{text-align:left;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">Client Loan &amp; Installment Register</p>
+      <h1>Collections Ledger</h1>
+    </div>
+    <div class="today" id="todayLabel"></div>
+  </div>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Search by name, account no. or code…">
+    <select id="statusFilter">
+      <option value="all">All statuses</option>
+      <option value="overdue">Overdue</option>
+      <option value="soon">Due within 7 days</option>
+      <option value="ok">Due later</option>
+      <option value="unset">No date set</option>
+    </select>
+    <select id="sortSelect">
+      <option value="due-asc">Sort: Next due (soonest)</option>
+      <option value="due-desc">Sort: Next due (latest)</option>
+      <option value="name-asc">Sort: Name (A–Z)</option>
+      <option value="amount-desc">Sort: Installment (high–low)</option>
+      <option value="code-asc">Sort: Code</option>
+    </select>
+    <button class="btn ghost small" id="historyBtn">Collection history</button>
+    <button class="btn ghost small" id="exportBtn">Export CSV</button>
+    <button class="btn ghost small" id="backupBtn">Download backup</button>
+    <button class="btn ghost small" id="restoreBtn">Restore backup</button>
+    <input type="file" id="restoreFile" accept="application/json" style="display:none;">
+    <span class="count" id="resultCount"></span>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-key="code">Code</th>
+          <th data-key="name">Client</th>
+          <th data-key="account">Account No.</th>
+          <th data-key="amount">Installment</th>
+          <th data-key="inst">Remaining</th>
+          <th data-key="due">Next Due</th>
+          <th data-key="status">Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-note" id="emptyNote" style="display:none;">No clients match your filters.</div>
+  </div>
+
+  <p class="footnote" id="storageNote">Loading saved collection data…</p>
+  <p class="footnote">Use <strong>Download backup</strong> anytime to save a snapshot of every due-date edit and payment you've logged as a .json file on your device — useful for an offline copy, or to move your records to another computer with <strong>Restore backup</strong>.</p>
+</div>
+
+<!-- Mark Collected Modal -->
+<div class="overlay" id="collectOverlay">
+  <div class="modal">
+    <h2>Record payment</h2>
+    <p class="sub" id="collectSub"></p>
+    <div class="field">
+      <label>Amount collected (₹)</label>
+      <input type="number" id="collectAmount" step="1">
+    </div>
+    <div class="field">
+      <label>Date collected</label>
+      <input type="date" id="collectDate">
+    </div>
+    <div class="field">
+      <label>Note (optional)</label>
+      <textarea id="collectNote" placeholder="e.g. paid by cash, partial payment…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost small" id="collectCancel">Cancel</button>
+      <button class="btn small" id="collectConfirm">Save payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="overlay" id="historyOverlay">
+  <div class="modal" style="max-width:520px;">
+    <h2>Collection history</h2>
+    <p class="sub">Most recent payments recorded on this device.</p>
+    <div class="history-list" id="historyList"></div>
+    <div class="modal-actions">
+      <button class="btn ghost small" id="historyClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENTS_DATA = [{"code":1,"account":"020197855651","name":"KHUSHABU KUMARI","aslass":"041953","amount":1500.0,"nextDue":"2026-07-03","opening":"2026-02-03","currentAmt":7500.0,"inst":5.0},{"code":2,"account":"020200706108","name":"RIYA GUPTA","aslass":"368107","amount":3000.0,"nextDue":"2026-08-16","opening":"2026-02-16","currentAmt":18000.0,"inst":6.0},{"code":3,"account":"020194434197","name":"KIRAN","aslass":"097525","amount":1000.0,"nextDue":"2027-01-20","opening":"2026-01-20","currentAmt":12000.0,"inst":12.0},{"code":4,"account":"020194475764","name":"SONIKA","aslass":null,"amount":4000.0,"nextDue":"2026-02-20","opening":"2026-01-20","currentAmt":4000.0,"inst":1.0},{"code":5,"account":"020194654759","name":"MUKESH RANI","aslass":"079281","amount":1000.0,"nextDue":"2026-07-21","opening":"2026-01-21","currentAmt":6000.0,"inst":6.0},{"code":6,"account":"020195608416","name":"BIJENDER SINGH","aslass":"041951","amount":2000.0,"nextDue":"2026-07-24","opening":"2026-01-24","currentAmt":12000.0,"inst":6.0},{"code":7,"account":"020220900287","name":"SANJEEV KUMAR JAIN","aslass":null,"amount":2000.0,"nextDue":"2026-08-22","opening":"2026-05-22","currentAmt":6000.0,"inst":3.0},{"code":8,"account":"020196406005","name":"MUKESH","aslass":"041952","amount":2000.0,"nextDue":"2026-07-28","opening":"2026-01-28","currentAmt":12000.0,"inst":6.0},{"code":9,"account":"020198563031","name":"ASHISH GOYAL","aslass":"041954","amount":2500.0,"nextDue":"2026-08-06","opening":"2026-02-06","currentAmt":15000.0,"inst":6.0},{"code":10,"account":"020200708834","name":"VISHAWNATH","aslass":"368161","amount":2000.0,"nextDue":"2027-02-16","opening":"2026-02-16","currentAmt":24000.0,"inst":12.0},{"code":11,"account":"020201628536","name":"ARATI DEVI","aslass":"368162","amount":2000.0,"nextDue":"2026-07-19","opening":"2026-02-19","currentAmt":10000.0,"inst":5.0},{"code":12,"account":"020204953692","name":"LALITA GOYAL","aslass":"368163","amount":1000.0,"nextDue":"2026-08-02","opening":"2026-03-02","currentAmt":5000.0,"inst":5.0},{"code":13,"account":"020205434265","name":"MANISHA","aslass":"368164","amount":2000.0,"nextDue":"2026-08-05","opening":"2026-03-05","currentAmt":10000.0,"inst":5.0},{"code":14,"account":"020206994420","name":"JAI GOPAL","aslass":"368165","amount":2000.0,"nextDue":"2026-08-11","opening":"2026-03-11","currentAmt":10000.0,"inst":5.0},{"code":15,"account":"020207675897","name":"ATMA RAM","aslass":"368167","amount":2000.0,"nextDue":"2026-08-13","opening":"2026-03-13","currentAmt":10000.0,"inst":5.0},{"code":16,"account":"020209430040","name":"RASHMI","aslass":"368166","amount":2000.0,"nextDue":"2027-03-18","opening":"2026-03-18","currentAmt":24000.0,"inst":12.0},{"code":17,"account":"020209448439","name":"SANGEETA JAIN","aslass":"368169","amount":3000.0,"nextDue":"2027-03-18","opening":"2026-03-18","currentAmt":36000.0,"inst":12.0},{"code":18,"account":"020209450322","name":"SATBIR SINGH","aslass":"368168","amount":1000.0,"nextDue":"2026-08-18","opening":"2026-03-18","currentAmt":5000.0,"inst":5.0},{"code":19,"account":"020211110869","name":"SARITA","aslass":null,"amount":2000.0,"nextDue":"2027-03-23","opening":"2026-03-23","currentAmt":24000.0,"inst":12.0},{"code":20,"account":"020218590347","name":"KAILASH RANI GARG","aslass":"368182","amount":1000.0,"nextDue":"2026-08-04","opening":"2026-05-04","currentAmt":3000.0,"inst":3.0},{"code":21,"account":"020211672090","name":"KOMAL KANWAR","aslass":"368171","amount":20000.0,"nextDue":"2026-08-24","opening":"2026-03-24","currentAmt":100000.0,"inst":5.0},{"code":22,"account":"020214843568","name":"KIRAN","aslass":"368175","amount":1000.0,"nextDue":"2026-07-30","opening":"2026-03-30","currentAmt":4000.0,"inst":4.0},{"code":23,"account":"020216675422","name":"GEETA","aslass":"368175","amount":2500.0,"nextDue":"2026-08-18","opening":"2026-04-18","currentAmt":10000.0,"inst":4.0},{"code":24,"account":"020216891380","name":"SANTOSH DEVI","aslass":"368178","amount":5000.0,"nextDue":"2026-07-20","opening":"2026-04-20","currentAmt":15000.0,"inst":3.0},{"code":25,"account":"020215337000","name":"PRITI BANSAL","aslass":"368173","amount":10000.0,"nextDue":"2026-08-06","opening":"2026-04-06","currentAmt":40000.0,"inst":4.0},{"code":26,"account":"020223582621","name":"AJAY BANSAL","aslass":null,"amount":3000.0,"nextDue":"2026-08-08","opening":"2026-06-08","currentAmt":6000.0,"inst":2.0},{"code":27,"account":"020223584368","name":"S SUNITA","aslass":null,"amount":5100.0,"nextDue":"2026-08-08","opening":"2026-06-08","currentAmt":10200.0,"inst":2.0},{"code":28,"account":"020228424063","name":"AMIT","aslass":null,"amount":20000.0,"nextDue":"2026-08-03","opening":"2026-07-03","currentAmt":20000.0,"inst":1.0},{"code":29,"account":"020226520408","name":"ARJUN KUMAR PANDAY","aslass":null,"amount":4000.0,"nextDue":"2026-08-24","opening":"2026-06-24","currentAmt":8000.0,"inst":2.0},{"code":30,"account":"020229972084","name":"RENU DEVI","aslass":null,"amount":2000.0,"nextDue":"2026-08-13","opening":"2026-07-13","currentAmt":2000.0,"inst":1.0},{"code":31,"account":"020231841073","name":"NEETU GARG","aslass":null,"amount":2000.0,"nextDue":"2026-08-21","opening":"2026-07-21","currentAmt":2000.0,"inst":1.0},{"code":32,"account":"020231845725","name":"MAMTA","aslass":null,"amount":500.0,"nextDue":"2026-08-21","opening":"2026-07-21","currentAmt":500.0,"inst":1.0},{"code":35,"account":"020014899120","name":"VAIBHAV","aslass":"082073","amount":2000.0,"nextDue":"2026-07-10","opening":"2021-07-10","currentAmt":120000.0,"inst":60.0},{"code":36,"account":"020016670688","name":"SUNITA","aslass":"082706","amount":1000.0,"nextDue":null,"opening":"2021-08-04","currentAmt":60000.0,"inst":60.0},{"code":37,"account":"020017077472","name":"MANJU RANI","aslass":"082719","amount":10000.0,"nextDue":null,"opening":null,"currentAmt":600000.0,"inst":60.0},{"code":38,"account":"020017082545","name":"KESHAV","aslass":"082075","amount":1500.0,"nextDue":"2026-07-10","opening":"2021-08-10","currentAmt":88500.0,"inst":59.0},{"code":39,"account":"020017754341","name":"SANJEET SHERWAT","aslass":"082720","amount":5000.0,"nextDue":"2026-07-19","opening":"2021-08-19","currentAmt":295000.0,"inst":59.0},{"code":40,"account":"020169286637","name":"RANJNA","aslass":"016501","amount":1500.0,"nextDue":"2026-08-09","opening":"2025-08-09","currentAmt":18000.0,"inst":12.0},{"code":41,"account":"020018524297","name":"GAURAV GARG","aslass":"34226","amount":5000.0,"nextDue":"2026-07-28","opening":"2021-08-28","currentAmt":295000.0,"inst":59.0},{"code":42,"account":"020018525573","name":"RAJIV GARG","aslass":"34225","amount":5000.0,"nextDue":"2026-07-28","opening":"2021-08-28","currentAmt":295000.0,"inst":59.0},{"code":43,"account":"020018558895","name":"RAJIV GARG","aslass":"34224","amount":5000.0,"nextDue":"2026-07-28","opening":"2021-08-28","currentAmt":295000.0,"inst":59.0},{"code":44,"account":"020018696681","name":"MANJU","aslass":"34223","amount":5000.0,"nextDue":"2026-07-31","opening":"2021-08-31","currentAmt":295000.0,"inst":59.0},{"code":45,"account":"020018697521","name":"ALKA GOYAL","aslass":"34218","amount":2000.0,"nextDue":"2026-07-31","opening":"2021-08-31","currentAmt":118000.0,"inst":59.0},{"code":46,"account":"020019486183","name":"KHUSHI","aslass":"024800","amount":2000.0,"nextDue":null,"opening":"2021-09-10","currentAmt":120000.0,"inst":60.0},{"code":47,"account":"020019524281","name":"BABLI","aslass":"082707","amount":2000.0,"nextDue":"2026-08-11","opening":"2021-09-11","currentAmt":118000.0,"inst":59.0},{"code":48,"account":"020019813258","name":"DOLLY","aslass":"082708","amount":500.0,"nextDue":"2026-08-16","opening":"2021-09-16","currentAmt":29500.0,"inst":59.0},{"code":49,"account":"020020235503","name":"MANJU DEVI","aslass":"082711","amount":2000.0,"nextDue":"2026-07-21","opening":"2021-09-21","currentAmt":116000.0,"inst":58.0},{"code":50,"account":"020020742407","name":"PAWANKUMAR","aslass":"082712","amount":1000.0,"nextDue":"2026-07-25","opening":"2021-09-25","currentAmt":58000.0,"inst":58.0},{"code":51,"account":"020020959203","name":"DARSHNA DEVI","aslass":"082713","amount":1500.0,"nextDue":null,"opening":null,"currentAmt":90000.0,"inst":60.0},{"code":52,"account":"020021440872","name":"L LATA RANI","aslass":"082715","amount":500.0,"nextDue":"2026-07-04","opening":"2021-10-04","currentAmt":28500.0,"inst":57.0},{"code":53,"account":"020022364868","name":"HEMLATA","aslass":"082716","amount":2000.0,"nextDue":"2026-07-18","opening":"2021-10-18","currentAmt":114000.0,"inst":57.0},{"code":54,"account":"020022757843","name":"RAHUL GOYAL","aslass":"082717","amount":5000.0,"nextDue":"2026-08-23","opening":"2021-10-23","currentAmt":290000.0,"inst":58.0},{"code":55,"account":"020022758955","name":"RAHUL GOYAL","aslass":"083136","amount":2000.0,"nextDue":"2026-08-23","opening":"2021-10-23","currentAmt":116000.0,"inst":58.0},{"code":56,"account":"020024285145","name":"RAGHUBIR SINGH","aslass":"083138","amount":4950.0,"nextDue":"2026-05-17","opening":"2021-11-17","currentAmt":267300.0,"inst":54.0},{"code":57,"account":"020025093939","name":"K KRISHAN SINGLA","aslass":"083139","amount":4000.0,"nextDue":"2026-07-27","opening":"2021-11-27","currentAmt":224000.0,"inst":56.0},{"code":58,"account":"020173578489","name":"PARSHANT GUPTA","aslass":"016516","amount":2000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":22000.0,"inst":11.0},{"code":59,"account":"020026597730","name":"BIMLA","aslass":"083141","amount":3000.0,"nextDue":"2026-08-18","opening":"2021-12-18","currentAmt":168000.0,"inst":56.0},{"code":60,"account":"020026598465","name":"SHANKUNTLA DEVI JAIN","aslass":"083142","amount":2000.0,"nextDue":"2026-08-18","opening":"2021-12-18","currentAmt":112000.0,"inst":56.0},{"code":61,"account":"020028902801","name":"SHEELA","aslass":"083145","amount":2000.0,"nextDue":"2026-08-17","opening":"2022-01-17","currentAmt":110000.0,"inst":55.0},{"code":62,"account":"020029577296","name":"USHA","aslass":"083143","amount":2000.0,"nextDue":"2026-07-22","opening":"2022-01-22","currentAmt":108000.0,"inst":54.0},{"code":63,"account":"020029834561","name":"RENU BANSAL","aslass":"036456","amount":10000.0,"nextDue":"2026-08-25","opening":"2022-01-25","currentAmt":550000.0,"inst":55.0},{"code":64,"account":"020029835203","name":"MONIKA","aslass":"036457","amount":10000.0,"nextDue":"2026-08-25","opening":"2022-01-25","currentAmt":550000.0,"inst":55.0},{"code":65,"account":"020030707699","name":"BANARSI DEVI","aslass":"036462","amount":3000.0,"nextDue":"2026-08-03","opening":"2022-02-03","currentAmt":162000.0,"inst":54.0},{"code":66,"account":"020030896029","name":"NAVEETA DEVI","aslass":"036463","amount":2000.0,"nextDue":"2026-08-05","opening":"2022-02-05","currentAmt":108000.0,"inst":54.0},{"code":67,"account":"020031205454","name":"M MAINA DEVI","aslass":"036464","amount":3000.0,"nextDue":"2026-09-10","opening":"2022-02-10","currentAmt":165000.0,"inst":55.0},{"code":68,"account":"020032756791","name":"KIRAN","aslass":"036465","amount":2000.0,"nextDue":"2026-08-24","opening":"2022-02-24","currentAmt":108000.0,"inst":54.0},{"code":69,"account":"020032915231","name":"NIRMAL","aslass":"036468","amount":500.0,"nextDue":"2026-07-25","opening":"2022-02-25","currentAmt":26500.0,"inst":53.0},{"code":70,"account":"020033362802","name":"BIMLA AHUJA","aslass":"016866","amount":10000.0,"nextDue":"2026-12-02","opening":"2022-03-02","currentAmt":570000.0,"inst":57.0},{"code":71,"account":"020034294239","name":"ANITA","aslass":"00007396","amount":500.0,"nextDue":"2026-08-11","opening":"2022-03-11","currentAmt":26500.0,"inst":53.0},{"code":72,"account":"020035345084","name":"MITHLESH","aslass":"089882","amount":1500.0,"nextDue":"2026-07-21","opening":"2022-03-21","currentAmt":78000.0,"inst":52.0},{"code":73,"account":"020035934897","name":"TARAMANI","aslass":"089881","amount":1500.0,"nextDue":null,"opening":"2022-03-24","currentAmt":90000.0,"inst":60.0},{"code":74,"account":"020037333903","name":"RADHIKA MITTAL","aslass":"047565","amount":1000.0,"nextDue":"2026-07-31","opening":"2022-03-31","currentAmt":52000.0,"inst":52.0},{"code":75,"account":"020037334170","name":"MANJU MITTAL","aslass":"000071743","amount":1000.0,"nextDue":"2026-07-31","opening":"2022-03-31","currentAmt":52000.0,"inst":52.0},{"code":76,"account":"020037337284","name":"RADHIKA MITTAL","aslass":"088049","amount":1000.0,"nextDue":"2026-07-31","opening":"2022-03-31","currentAmt":52000.0,"inst":52.0},{"code":77,"account":"020037337642","name":"MANJU MITTAL","aslass":"056432","amount":1000.0,"nextDue":"2026-07-31","opening":"2022-03-31","currentAmt":52000.0,"inst":52.0},{"code":78,"account":"020038426315","name":"DRISHTI","aslass":"0075814","amount":1000.0,"nextDue":"2026-08-21","opening":"2022-04-21","currentAmt":52000.0,"inst":52.0},{"code":79,"account":"020038572598","name":"GULSHAN KUMAR","aslass":"0075816","amount":1500.0,"nextDue":"2026-08-23","opening":"2022-04-23","currentAmt":78000.0,"inst":52.0},{"code":80,"account":"020188359553","name":"POOJA GOYAL","aslass":"041638","amount":5000.0,"nextDue":"2026-08-18","opening":"2025-12-18","currentAmt":40000.0,"inst":8.0},{"code":81,"account":"020040066120","name":"PARWATI ARYA","aslass":"0077519","amount":3000.0,"nextDue":"2026-05-18","opening":"2022-05-18","currentAmt":144000.0,"inst":48.0},{"code":82,"account":"020040503846","name":"RAMJILAL","aslass":"0077524","amount":4000.0,"nextDue":"2026-08-24","opening":"2022-05-24","currentAmt":204000.0,"inst":51.0},{"code":83,"account":"020040505536","name":"SANJAY KUMAR GUPTA","aslass":"0077522","amount":4000.0,"nextDue":"2026-08-24","opening":"2022-05-24","currentAmt":204000.0,"inst":51.0},{"code":84,"account":"020040505714","name":"JAI GUPTA","aslass":"0077523","amount":4000.0,"nextDue":"2026-08-24","opening":"2022-05-24","currentAmt":204000.0,"inst":51.0},{"code":85,"account":"020040609322","name":"LALITA DEVI","aslass":"0077525","amount":4000.0,"nextDue":"2026-08-25","opening":"2022-05-25","currentAmt":204000.0,"inst":51.0},{"code":86,"account":"020040609971","name":"VANDANA","aslass":"0077526","amount":4000.0,"nextDue":"2026-08-25","opening":"2022-05-25","currentAmt":204000.0,"inst":51.0},{"code":87,"account":"020040610171","name":"ARUN GUPTA","aslass":"0077533","amount":4000.0,"nextDue":"2026-08-25","opening":"2022-05-25","currentAmt":204000.0,"inst":51.0},{"code":88,"account":"020040610349","name":"AJAY KUMAR","aslass":"0077527","amount":4000.0,"nextDue":"2026-08-25","opening":"2022-05-25","currentAmt":204000.0,"inst":51.0},{"code":89,"account":"020040610876","name":"SANTOSH GUPTA","aslass":"0077528","amount":4000.0,"nextDue":"2026-08-25","opening":"2022-05-25","currentAmt":204000.0,"inst":51.0},{"code":90,"account":"020041075517","name":"AMIT KUMAR","aslass":"0077532","amount":10000.0,"nextDue":"2026-07-31","opening":"2022-05-31","currentAmt":500000.0,"inst":50.0},{"code":91,"account":"020185965264","name":"ANJALI","aslass":"055707","amount":6000.0,"nextDue":"2026-08-02","opening":"2025-12-02","currentAmt":48000.0,"inst":8.0},{"code":92,"account":"020041743550","name":"GEETA","aslass":"0077534","amount":2000.0,"nextDue":"2026-07-09","opening":"2022-06-09","currentAmt":98000.0,"inst":49.0},{"code":93,"account":"020042638087","name":"ADITYA","aslass":"0077537","amount":1000.0,"nextDue":"2026-07-22","opening":"2022-06-22","currentAmt":49000.0,"inst":49.0},{"code":94,"account":"020042647023","name":"DIPANSHU","aslass":"0077536","amount":1000.0,"nextDue":"2026-07-22","opening":"2022-06-22","currentAmt":49000.0,"inst":49.0},{"code":95,"account":"020043666565","name":"MADHU SARDANA","aslass":"0077540","amount":2000.0,"nextDue":"2026-08-07","opening":"2022-07-07","currentAmt":98000.0,"inst":49.0},{"code":96,"account":"020186274820","name":"KRISHNA DEVI","aslass":"055708","amount":3000.0,"nextDue":"2026-12-04","opening":"2025-12-04","currentAmt":36000.0,"inst":12.0},{"code":97,"account":"020043671766","name":"PRINCE","aslass":"0077539","amount":1000.0,"nextDue":"2026-07-07","opening":"2022-07-07","currentAmt":48000.0,"inst":48.0},{"code":98,"account":"020043755840","name":"SHUBHAM JAIN","aslass":"002296","amount":1000.0,"nextDue":"2026-07-08","opening":"2022-07-08","currentAmt":48000.0,"inst":48.0},{"code":99,"account":"020043994119","name":"RAJIV SINGAL","aslass":"002297","amount":5000.0,"nextDue":"2026-08-12","opening":"2022-07-12","currentAmt":245000.0,"inst":49.0},{"code":100,"account":"020044045154","name":"ASHA GUPTA","aslass":"002299","amount":1000.0,"nextDue":"2026-07-13","opening":"2022-07-13","currentAmt":48000.0,"inst":48.0},{"code":101,"account":"020044137157","name":"GAURAV PANDEY","aslass":"002298","amount":500.0,"nextDue":"2026-08-14","opening":"2022-07-14","currentAmt":24500.0,"inst":49.0},{"code":102,"account":"020044352418","name":"SUNITA","aslass":"002300","amount":1000.0,"nextDue":"2026-07-16","opening":"2022-07-16","currentAmt":48000.0,"inst":48.0},{"code":103,"account":"020044404325","name":"JANKI DEVI","aslass":"002301","amount":1000.0,"nextDue":"2026-08-18","opening":"2022-07-18","currentAmt":49000.0,"inst":49.0},{"code":104,"account":"020044517608","name":"L LALITA JAIN","aslass":"002303","amount":1000.0,"nextDue":"2026-07-19","opening":"2022-07-19","currentAmt":48000.0,"inst":48.0},{"code":105,"account":"020044517906","name":"L LALITA JAIN","aslass":"002302","amount":1000.0,"nextDue":"2026-07-19","opening":"2022-07-19","currentAmt":48000.0,"inst":48.0},{"code":106,"account":"020047439356","name":"SARITA GOYAL","aslass":"002305","amount":1000.0,"nextDue":"2026-08-23","opening":"2022-08-23","currentAmt":48000.0,"inst":48.0},{"code":107,"account":"020047441578","name":"SEEMA MAHIPAL","aslass":"002304","amount":1000.0,"nextDue":"2026-08-23","opening":"2022-08-23","currentAmt":48000.0,"inst":48.0},{"code":108,"account":"020047443363","name":"MOHIT GOYAL","aslass":"002306","amount":1000.0,"nextDue":"2026-08-23","opening":"2022-08-23","currentAmt":48000.0,"inst":48.0},{"code":109,"account":"020169287120","name":"RAJESH KUMAR","aslass":"16503","amount":2000.0,"nextDue":"2026-08-09","opening":"2025-08-09","currentAmt":24000.0,"inst":12.0},{"code":110,"account":"020048097681","name":"ANJU","aslass":"002307","amount":2000.0,"nextDue":"2026-08-31","opening":"2022-08-31","currentAmt":96000.0,"inst":48.0},{"code":111,"account":"020169289904","name":"PRAGATI BANSAL","aslass":"016502","amount":5000.0,"nextDue":"2026-08-09","opening":"2025-08-09","currentAmt":60000.0,"inst":12.0},{"code":112,"account":"020048402948","name":"BHAWANA","aslass":"002310","amount":2000.0,"nextDue":"2026-08-03","opening":"2022-09-03","currentAmt":94000.0,"inst":47.0},{"code":113,"account":"020049025032","name":"SEEMA SINHA","aslass":"15856","amount":15000.0,"nextDue":"2026-08-13","opening":"2022-09-13","currentAmt":705000.0,"inst":47.0},{"code":114,"account":"020049038186","name":"SHANKUNTLA DEVI JAIN","aslass":"15857","amount":1000.0,"nextDue":"2026-08-13","opening":"2022-09-13","currentAmt":47000.0,"inst":47.0},{"code":115,"account":"020049578977","name":"ANJU BALA","aslass":"15858","amount":2000.0,"nextDue":"2026-05-19","opening":"2022-09-19","currentAmt":88000.0,"inst":44.0},{"code":116,"account":"020172568633","name":"RIYA GUPTA","aslass":"016514","amount":3000.0,"nextDue":"2026-08-04","opening":"2025-09-04","currentAmt":33000.0,"inst":11.0},{"code":117,"account":"020050503587","name":"REKHA SHARMA","aslass":"15862","amount":5000.0,"nextDue":"2026-08-28","opening":"2022-09-28","currentAmt":235000.0,"inst":47.0},{"code":118,"account":"020050505126","name":"PREM GOYAL","aslass":"15861","amount":1500.0,"nextDue":"2026-07-28","opening":"2022-09-28","currentAmt":69000.0,"inst":46.0},{"code":119,"account":"020186279615","name":"URMIL GUPTA","aslass":"055709","amount":2000.0,"nextDue":"2026-08-04","opening":"2025-12-04","currentAmt":16000.0,"inst":8.0},{"code":120,"account":"020187410569","name":"ANIL KUMAR GUPTA","aslass":"041639","amount":2000.0,"nextDue":"2026-08-12","opening":"2025-12-12","currentAmt":16000.0,"inst":8.0},{"code":121,"account":"020188390140","name":"SNEHLATA","aslass":"041640","amount":2000.0,"nextDue":"2027-01-18","opening":"2025-12-18","currentAmt":26000.0,"inst":13.0},{"code":122,"account":"020191166092","name":"PREETI GARG","aslass":"041641","amount":10000.0,"nextDue":"2027-01-01","opening":"2026-01-01","currentAmt":120000.0,"inst":12.0},{"code":123,"account":"020053342804","name":"POONAM","aslass":"15867","amount":5000.0,"nextDue":"2026-08-21","opening":"2022-10-21","currentAmt":230000.0,"inst":46.0},{"code":124,"account":"020053852185","name":"BANARSI DEVI","aslass":"15868","amount":3000.0,"nextDue":"2026-08-29","opening":"2022-10-29","currentAmt":138000.0,"inst":46.0},{"code":125,"account":"020191489497","name":"DARSHAN JAIN","aslass":"041642","amount":2500.0,"nextDue":"2027-01-03","opening":"2026-01-03","currentAmt":30000.0,"inst":12.0},{"code":126,"account":"020055562974","name":"BHAGWATI","aslass":"15871","amount":2000.0,"nextDue":"2026-07-22","opening":"2022-11-22","currentAmt":88000.0,"inst":44.0},{"code":127,"account":"020055563332","name":"RAMSWAROOP","aslass":"15872","amount":1500.0,"nextDue":"2026-08-22","opening":"2022-11-22","currentAmt":67500.0,"inst":45.0},{"code":128,"account":"020056206975","name":"MONIKA BANSAL","aslass":"15873","amount":10000.0,"nextDue":"2026-07-28","opening":"2022-11-28","currentAmt":440000.0,"inst":44.0},{"code":129,"account":"020056210188","name":"NEELAM RANI","aslass":"15874","amount":10000.0,"nextDue":"2026-07-28","opening":"2022-11-28","currentAmt":440000.0,"inst":44.0},{"code":130,"account":"020056537626","name":"SHAIFALI","aslass":"15875","amount":1000.0,"nextDue":"2026-08-01","opening":"2022-12-01","currentAmt":44000.0,"inst":44.0},{"code":131,"account":"020057683092","name":"HIMANSHU","aslass":"60370","amount":2000.0,"nextDue":"2026-07-16","opening":"2022-12-16","currentAmt":86000.0,"inst":43.0},{"code":132,"account":"020057684594","name":"MURTI DEVI","aslass":"60368","amount":1500.0,"nextDue":"2026-08-16","opening":"2022-12-16","currentAmt":66000.0,"inst":44.0},{"code":133,"account":"020057912016","name":"SANDEEP KUMAR","aslass":"24280","amount":3000.0,"nextDue":"2026-07-19","opening":"2022-12-19","currentAmt":129000.0,"inst":43.0},{"code":134,"account":"020058306313","name":"N NARESH KUMAR","aslass":"60372","amount":1500.0,"nextDue":"2026-07-22","opening":"2022-12-22","currentAmt":64500.0,"inst":43.0},{"code":135,"account":"020059269564","name":"MAHESH TIWARI","aslass":"60374","amount":2500.0,"nextDue":"2026-07-02","opening":"2023-01-02","currentAmt":105000.0,"inst":42.0},{"code":136,"account":"020059466618","name":"HARSHIT","aslass":"60375","amount":2000.0,"nextDue":"2026-04-04","opening":"2023-01-04","currentAmt":78000.0,"inst":39.0},{"code":137,"account":"020059725003","name":"NEERU SHARMA","aslass":"60906","amount":1000.0,"nextDue":"2026-08-06","opening":"2023-01-06","currentAmt":43000.0,"inst":43.0},{"code":138,"account":"020060865743","name":"SWEETY AGGARWAL","aslass":"60907","amount":2000.0,"nextDue":"2026-08-19","opening":"2023-01-19","currentAmt":86000.0,"inst":43.0},{"code":139,"account":"020060865995","name":"PAYAL","aslass":"60908","amount":1000.0,"nextDue":"2026-08-19","opening":"2023-01-19","currentAmt":43000.0,"inst":43.0},{"code":140,"account":"020061385874","name":"KIRAN W/OMANOJ KR","aslass":"60914","amount":1000.0,"nextDue":"2026-08-23","opening":"2023-01-23","currentAmt":43000.0,"inst":43.0},{"code":141,"account":"020061386874","name":"KALAWATI","aslass":"60911","amount":2000.0,"nextDue":"2026-08-23","opening":"2023-01-23","currentAmt":86000.0,"inst":43.0},{"code":142,"account":"020061595613","name":"KAMALA RANI","aslass":"60912","amount":1000.0,"nextDue":"2026-08-24","opening":"2023-01-24","currentAmt":43000.0,"inst":43.0},{"code":143,"account":"020064010992","name":"NIRMAL","aslass":"60913","amount":500.0,"nextDue":"2026-07-30","opening":"2023-01-30","currentAmt":21000.0,"inst":42.0},{"code":144,"account":"020065705307","name":"SAVITA SINGAL","aslass":"025271","amount":2000.0,"nextDue":"2026-06-08","opening":"2023-02-08","currentAmt":80000.0,"inst":40.0},{"code":145,"account":"020214844985","name":"KIRAN","aslass":"368172","amount":1000.0,"nextDue":"2026-07-30","opening":"2026-03-30","currentAmt":4000.0,"inst":4.0},{"code":146,"account":"020216412697","name":"DEVENDER GARG","aslass":"368174","amount":20000.0,"nextDue":"2026-08-16","opening":"2026-04-16","currentAmt":80000.0,"inst":4.0},{"code":147,"account":"020066880950","name":"KAMALA RANI","aslass":"25275","amount":1000.0,"nextDue":"2026-08-21","opening":"2023-02-21","currentAmt":42000.0,"inst":42.0},{"code":148,"account":"020066882717","name":"MOHIT KUMAR S/O SUBASH CH","aslass":"25274","amount":2000.0,"nextDue":"2027-05-21","opening":"2023-02-21","currentAmt":102000.0,"inst":51.0},{"code":149,"account":"020067407477","name":"MONIKA","aslass":"25272","amount":1000.0,"nextDue":"2026-06-22","opening":"2023-02-22","currentAmt":40000.0,"inst":40.0},{"code":150,"account":"020067441504","name":"NAVEETA DEVI","aslass":"28666","amount":2000.0,"nextDue":"2026-08-22","opening":"2023-02-22","currentAmt":84000.0,"inst":42.0},{"code":151,"account":"020216893748","name":"USHA GARG","aslass":"368176","amount":500.0,"nextDue":"2026-08-20","opening":"2026-04-20","currentAmt":2000.0,"inst":4.0},{"code":152,"account":"020067932254","name":"SIMRAN","aslass":"28665","amount":500.0,"nextDue":"2026-07-23","opening":"2023-02-23","currentAmt":20500.0,"inst":41.0},{"code":153,"account":"020070174202","name":"PARMOD KUMAR","aslass":"28667","amount":2000.0,"nextDue":"2026-08-10","opening":"2023-03-10","currentAmt":82000.0,"inst":41.0},{"code":154,"account":"020073566062","name":"BANARSI DEVI","aslass":"28669","amount":4000.0,"nextDue":"2026-08-11","opening":"2023-04-11","currentAmt":160000.0,"inst":40.0},{"code":155,"account":"020074240343","name":"MINAL","aslass":"28672","amount":3000.0,"nextDue":"2026-08-19","opening":"2023-04-19","currentAmt":120000.0,"inst":40.0},{"code":156,"account":"020216899793","name":"PARI","aslass":"368177","amount":500.0,"nextDue":"2026-08-20","opening":"2026-04-20","currentAmt":2000.0,"inst":4.0},{"code":157,"account":"020074243824","name":"M MOHIT JAIN","aslass":"28673","amount":2500.0,"nextDue":"2026-08-19","opening":"2023-04-19","currentAmt":100000.0,"inst":40.0},{"code":158,"account":"020074465199","name":"BALA","aslass":"28675","amount":5000.0,"nextDue":"2026-08-21","opening":"2023-04-21","currentAmt":200000.0,"inst":40.0},{"code":159,"account":"020074578049","name":"DEVENDER KUMAR THUKRAL","aslass":"025276","amount":2000.0,"nextDue":"2026-08-24","opening":"2023-04-24","currentAmt":80000.0,"inst":40.0},{"code":160,"account":"020074713905","name":"KAUSHLYA","aslass":"025277","amount":1000.0,"nextDue":"2026-06-25","opening":"2023-04-25","currentAmt":38000.0,"inst":38.0},{"code":161,"account":"020075086268","name":"MISHIKA","aslass":"025279","amount":1000.0,"nextDue":"2026-07-28","opening":"2023-04-28","currentAmt":39000.0,"inst":39.0},{"code":162,"account":"020075086358","name":"SAMAIRA","aslass":"025278","amount":1000.0,"nextDue":"2026-07-28","opening":"2023-04-28","currentAmt":39000.0,"inst":39.0},{"code":163,"account":"020075612298","name":"RENU GARG","aslass":"025282","amount":1000.0,"nextDue":"2026-08-06","opening":"2023-05-06","currentAmt":39000.0,"inst":39.0},{"code":164,"account":"020075978859","name":"RAVI CHHABRA","aslass":"025283","amount":2000.0,"nextDue":"2026-07-11","opening":"2023-05-11","currentAmt":76000.0,"inst":38.0},{"code":165,"account":"020076421721","name":"LUXMI","aslass":"025285","amount":2000.0,"nextDue":"2026-08-17","opening":"2023-05-17","currentAmt":78000.0,"inst":39.0},{"code":166,"account":"020076632618","name":"PANKAJ BINDAL","aslass":"048427","amount":1000.0,"nextDue":"2026-08-19","opening":"2023-05-19","currentAmt":39000.0,"inst":39.0},{"code":167,"account":"020076830182","name":"KAMLA DEVI","aslass":"048428","amount":500.0,"nextDue":"2027-05-22","opening":"2023-05-22","currentAmt":24000.0,"inst":48.0},{"code":168,"account":"020077182063","name":"MONIKA","aslass":"048430","amount":3000.0,"nextDue":"2026-08-25","opening":"2023-05-25","currentAmt":117000.0,"inst":39.0},{"code":169,"account":"020077182275","name":"SANJAY KUMAR","aslass":"048429","amount":1500.0,"nextDue":"2026-07-25","opening":"2023-05-25","currentAmt":57000.0,"inst":38.0},{"code":170,"account":"020077471963","name":"KANCHI DHAMIJA","aslass":"048431","amount":10000.0,"nextDue":"2026-08-29","opening":"2023-05-29","currentAmt":390000.0,"inst":39.0},{"code":171,"account":"020077932843","name":"DOLLY","aslass":"048432","amount":500.0,"nextDue":"2026-08-03","opening":"2023-06-03","currentAmt":19000.0,"inst":38.0},{"code":172,"account":"020078135001","name":"ABHILUV GARG","aslass":"048434","amount":1000.0,"nextDue":"2026-07-06","opening":"2023-06-06","currentAmt":37000.0,"inst":37.0},{"code":173,"account":"020078135606","name":"HARDIK GARG","aslass":"048433","amount":1000.0,"nextDue":"2026-07-06","opening":"2023-06-06","currentAmt":37000.0,"inst":37.0},{"code":174,"account":"020225639622","name":"ANJU","aslass":null,"amount":1000.0,"nextDue":"2026-08-19","opening":"2026-06-19","currentAmt":2000.0,"inst":2.0},{"code":175,"account":"020078634145","name":"NAINA","aslass":"048436","amount":1000.0,"nextDue":"2026-08-13","opening":"2023-06-13","currentAmt":38000.0,"inst":38.0},{"code":176,"account":"020078949479","name":"DEEPAK KUMAR","aslass":"048438","amount":10000.0,"nextDue":"2026-08-16","opening":"2023-06-16","currentAmt":380000.0,"inst":38.0},{"code":177,"account":"020078953459","name":"DEEPAK KUMAR","aslass":"048439","amount":10000.0,"nextDue":"2026-08-16","opening":"2023-06-16","currentAmt":380000.0,"inst":38.0},{"code":178,"account":"020078963611","name":"MANISHA","aslass":"048440","amount":20000.0,"nextDue":"2026-08-16","opening":"2023-06-16","currentAmt":760000.0,"inst":38.0},{"code":179,"account":"020226284133","name":"USHA RANI","aslass":null,"amount":2000.0,"nextDue":"2027-06-23","opening":"2026-06-23","currentAmt":24000.0,"inst":12.0},{"code":180,"account":"020226523757","name":"NISHANT","aslass":null,"amount":6000.0,"nextDue":"2026-08-24","opening":"2026-06-24","currentAmt":12000.0,"inst":2.0},{"code":181,"account":"020079101949","name":"ANUSUEIA","aslass":"048442","amount":10000.0,"nextDue":"2026-08-17","opening":"2023-06-17","currentAmt":380000.0,"inst":38.0},{"code":182,"account":"020079102117","name":"SUMANDWIVEDI","aslass":"048443","amount":1000.0,"nextDue":"2026-07-17","opening":"2023-06-17","currentAmt":37000.0,"inst":37.0},{"code":183,"account":"020079231634","name":"RISHU SINDHWANI","aslass":"048446","amount":600.0,"nextDue":"2026-07-19","opening":"2023-06-19","currentAmt":22200.0,"inst":37.0},{"code":184,"account":"020079234688","name":"NEETU","aslass":"048445","amount":3000.0,"nextDue":"2026-04-19","opening":"2023-06-19","currentAmt":102000.0,"inst":34.0},{"code":185,"account":"020079238398","name":"NISHA RANI","aslass":"048449","amount":500.0,"nextDue":"2027-06-19","opening":"2023-06-19","currentAmt":24000.0,"inst":48.0},{"code":186,"account":"020079245797","name":"VIDHYA DEVI","aslass":"048448","amount":1000.0,"nextDue":"2026-07-19","opening":"2023-06-19","currentAmt":37000.0,"inst":37.0},{"code":187,"account":"020079978999","name":"SAJJAN SINGH","aslass":"048447","amount":3000.0,"nextDue":"2026-08-26","opening":"2023-06-26","currentAmt":114000.0,"inst":38.0},{"code":188,"account":"020079980093","name":"SUNITA","aslass":"048450","amount":3000.0,"nextDue":"2026-08-26","opening":"2023-06-26","currentAmt":114000.0,"inst":38.0},{"code":189,"account":"020080628556","name":"PREETI MITTAL","aslass":"044877","amount":10000.0,"nextDue":"2026-08-01","opening":"2023-07-01","currentAmt":370000.0,"inst":37.0},{"code":190,"account":"020080710447","name":"MAYANK","aslass":"044880","amount":1000.0,"nextDue":"2026-08-03","opening":"2023-07-03","currentAmt":37000.0,"inst":37.0},{"code":191,"account":"020080713149","name":"SWATI","aslass":"044879","amount":2000.0,"nextDue":"2026-08-03","opening":"2023-07-03","currentAmt":74000.0,"inst":37.0},{"code":192,"account":"020080713978","name":"SAROJ BANSAL","aslass":"044878","amount":1000.0,"nextDue":"2027-07-03","opening":"2023-07-03","currentAmt":48000.0,"inst":48.0},{"code":193,"account":"020081951587","name":"PREMIT KUMAR","aslass":"044881","amount":5000.0,"nextDue":"2026-07-18","opening":"2023-07-18","currentAmt":180000.0,"inst":36.0},{"code":194,"account":"020082269530","name":"M MADHU JAIN","aslass":"044883","amount":1500.0,"nextDue":"2026-08-20","opening":"2023-07-20","currentAmt":55500.0,"inst":37.0},{"code":195,"account":"020082455687","name":"SHAKUNTLA DEVI","aslass":"044884","amount":5000.0,"nextDue":"2026-07-22","opening":"2023-07-22","currentAmt":180000.0,"inst":36.0},{"code":196,"account":"020082947512","name":"LEHAR","aslass":"044885","amount":5000.0,"nextDue":"2026-07-27","opening":"2023-07-27","currentAmt":180000.0,"inst":36.0},{"code":197,"account":"020083061314","name":"MADAN GOPAL","aslass":"044887","amount":5000.0,"nextDue":"2026-07-28","opening":"2023-07-28","currentAmt":180000.0,"inst":36.0},{"code":198,"account":"020083137236","name":"AJAY BANSAL","aslass":"044888","amount":3000.0,"nextDue":"2026-06-30","opening":"2023-07-30","currentAmt":105000.0,"inst":35.0},{"code":199,"account":"020083137988","name":"NEELAM RANI","aslass":"044886","amount":10000.0,"nextDue":"2026-07-31","opening":"2023-07-31","currentAmt":360000.0,"inst":36.0},{"code":200,"account":"020084566031","name":"R RACHNA SHARMA","aslass":"044889","amount":11000.0,"nextDue":"2026-08-18","opening":"2023-08-18","currentAmt":396000.0,"inst":36.0},{"code":201,"account":"020084922035","name":"MANOJ KUMAR","aslass":"24466","amount":3000.0,"nextDue":"2026-07-22","opening":"2023-08-22","currentAmt":105000.0,"inst":35.0},{"code":202,"account":"020085305423","name":"ASHA GUPTA","aslass":"044890","amount":5000.0,"nextDue":"2026-08-25","opening":"2023-08-25","currentAmt":180000.0,"inst":36.0},{"code":203,"account":"020085734141","name":"JAWHAR LAL SAINI","aslass":"044892","amount":1000.0,"nextDue":"2026-08-30","opening":"2023-08-30","currentAmt":36000.0,"inst":36.0},{"code":204,"account":"020086578760","name":"DIMPLE GOENKA","aslass":"044893","amount":4000.0,"nextDue":"2026-09-09","opening":"2023-09-09","currentAmt":144000.0,"inst":36.0},{"code":205,"account":"020086885996","name":"CHAVI","aslass":"074488","amount":5000.0,"nextDue":"2027-03-13","opening":"2023-09-13","currentAmt":210000.0,"inst":42.0},{"code":206,"account":"020086887621","name":"PAYAL","aslass":"074486","amount":5000.0,"nextDue":"2027-03-13","opening":"2023-09-13","currentAmt":210000.0,"inst":42.0},{"code":207,"account":"020086891724","name":"SANIKA GOYAL","aslass":"074489","amount":5000.0,"nextDue":"2027-03-13","opening":"2023-09-13","currentAmt":210000.0,"inst":42.0},{"code":208,"account":"020086892115","name":"LAKSHAY GOYAL","aslass":"074487","amount":5000.0,"nextDue":"2027-03-13","opening":"2023-09-13","currentAmt":210000.0,"inst":42.0},{"code":209,"account":"020087499568","name":"RAM","aslass":"044894","amount":1000.0,"nextDue":"2026-07-20","opening":"2023-09-20","currentAmt":34000.0,"inst":34.0},{"code":210,"account":"020087682912","name":"MANISHA","aslass":"044895","amount":6000.0,"nextDue":"2026-08-21","opening":"2023-09-21","currentAmt":210000.0,"inst":35.0},{"code":211,"account":"020087907540","name":"INDER KUMAR","aslass":"074491","amount":1000.0,"nextDue":"2026-07-23","opening":"2023-09-23","currentAmt":34000.0,"inst":34.0},{"code":212,"account":"020087907809","name":"NARESH KUMAR","aslass":"074490","amount":1000.0,"nextDue":"2026-07-23","opening":"2023-09-23","currentAmt":34000.0,"inst":34.0},{"code":213,"account":"020088015985","name":"SWATI","aslass":"074492","amount":2000.0,"nextDue":"2026-08-25","opening":"2023-09-25","currentAmt":70000.0,"inst":35.0},{"code":214,"account":"020089312223","name":"NIRMAL","aslass":"074495","amount":1000.0,"nextDue":"2026-07-11","opening":"2023-10-11","currentAmt":33000.0,"inst":33.0},{"code":215,"account":"020089722129","name":"MONIKA JAIN","aslass":"074496","amount":1000.0,"nextDue":"2026-07-16","opening":"2023-10-16","currentAmt":33000.0,"inst":33.0},{"code":216,"account":"020089723437","name":"MAHABIR PRASAD","aslass":"074498","amount":3000.0,"nextDue":"2026-08-16","opening":"2023-10-16","currentAmt":102000.0,"inst":34.0},{"code":217,"account":"020089726183","name":"RAJ KUMAR","aslass":"074500","amount":5000.0,"nextDue":"2026-07-16","opening":"2023-10-16","currentAmt":165000.0,"inst":33.0},{"code":218,"account":"020089727232","name":"RIYA GUPTA","aslass":"074497","amount":2000.0,"nextDue":"2026-08-16","opening":"2023-10-16","currentAmt":68000.0,"inst":34.0},{"code":219,"account":"020089727942","name":"ANJU DEVI","aslass":"074493","amount":1000.0,"nextDue":"2026-07-16","opening":"2023-10-16","currentAmt":33000.0,"inst":33.0},{"code":220,"account":"020089758714","name":"NAVITA JAIN","aslass":"074499","amount":5000.0,"nextDue":"2026-08-16","opening":"2023-10-16","currentAmt":170000.0,"inst":34.0},{"code":221,"account":"020090403648","name":"MANJU GARG","aslass":"074501","amount":5000.0,"nextDue":"2026-08-23","opening":"2023-10-23","currentAmt":170000.0,"inst":34.0},{"code":222,"account":"020090569518","name":"RAJ KUMAR SHARMA","aslass":"074502","amount":1000.0,"nextDue":"2026-07-26","opening":"2023-10-26","currentAmt":33000.0,"inst":33.0},{"code":223,"account":"020191848917","name":"AMIT","aslass":"041854","amount":20000.0,"nextDue":"2026-08-06","opening":"2026-01-06","currentAmt":140000.0,"inst":7.0},{"code":224,"account":"020090843564","name":"S SUNITA","aslass":"074504","amount":1000.0,"nextDue":"2026-08-28","opening":"2023-10-28","currentAmt":34000.0,"inst":34.0},{"code":225,"account":"020090909972","name":"SHANKUNTLA DEVI","aslass":"074505","amount":1000.0,"nextDue":"2026-11-30","opening":"2023-10-30","currentAmt":37000.0,"inst":37.0},{"code":226,"account":"020092579949","name":"HINA","aslass":"074246","amount":2000.0,"nextDue":"2026-08-17","opening":"2023-11-17","currentAmt":66000.0,"inst":33.0},{"code":227,"account":"020092671490","name":"VED PARKASH","aslass":"074247","amount":1500.0,"nextDue":"2026-08-18","opening":"2023-11-18","currentAmt":49500.0,"inst":33.0},{"code":228,"account":"020093823659","name":"NAMISH BANSAL","aslass":"074248","amount":6000.0,"nextDue":"2026-07-29","opening":"2023-11-29","currentAmt":192000.0,"inst":32.0},{"code":229,"account":"020095028021","name":"BABITA","aslass":"074250","amount":2000.0,"nextDue":"2026-08-09","opening":"2023-12-09","currentAmt":64000.0,"inst":32.0},{"code":230,"account":"020095028926","name":"SHANTI DEVI","aslass":"074251","amount":2500.0,"nextDue":"2026-07-09","opening":"2023-12-09","currentAmt":77500.0,"inst":31.0},{"code":231,"account":"020095029239","name":"SHANTI DEVI","aslass":"074252","amount":2500.0,"nextDue":"2026-07-09","opening":"2023-12-09","currentAmt":77500.0,"inst":31.0},{"code":232,"account":"020095031089","name":"SHANTI DEVI","aslass":"074253","amount":1000.0,"nextDue":"2026-07-09","opening":"2023-12-09","currentAmt":31000.0,"inst":31.0},{"code":233,"account":"020095034057","name":"SUMAN DEVI","aslass":"074249","amount":6000.0,"nextDue":"2026-07-09","opening":"2023-12-09","currentAmt":186000.0,"inst":31.0},{"code":234,"account":"020096434862","name":"MANISH GOYAL S/O KRISHANK","aslass":"074254","amount":2000.0,"nextDue":"2026-07-23","opening":"2023-12-23","currentAmt":62000.0,"inst":31.0},{"code":235,"account":"020096557869","name":"S SALOCHNA","aslass":"074258","amount":15000.0,"nextDue":"2026-07-26","opening":"2023-12-26","currentAmt":465000.0,"inst":31.0},{"code":236,"account":"020096558018","name":"SALOCHNA","aslass":"074259","amount":15000.0,"nextDue":"2026-07-26","opening":"2023-12-26","currentAmt":465000.0,"inst":31.0},{"code":237,"account":"020096559725","name":"SURBHI","aslass":"074260","amount":1000.0,"nextDue":"2026-07-26","opening":"2023-12-26","currentAmt":31000.0,"inst":31.0},{"code":238,"account":"020096560202","name":"PAWAN BANSAL","aslass":"074256","amount":15000.0,"nextDue":"2026-07-26","opening":"2023-12-26","currentAmt":465000.0,"inst":31.0},{"code":239,"account":"020096561146","name":"PAWAN BANSAL","aslass":"074257","amount":15000.0,"nextDue":"2026-07-26","opening":"2023-12-26","currentAmt":465000.0,"inst":31.0},{"code":240,"account":"020096561709","name":"SHAIFALI","aslass":"074255","amount":2000.0,"nextDue":"2026-08-26","opening":"2023-12-26","currentAmt":64000.0,"inst":32.0},{"code":241,"account":"020097362262","name":"JYOTI JAIN","aslass":"075966","amount":1000.0,"nextDue":"2026-08-03","opening":"2024-01-03","currentAmt":31000.0,"inst":31.0},{"code":242,"account":"020097690310","name":"LALITA DEVI","aslass":"075967","amount":2000.0,"nextDue":"2026-08-05","opening":"2024-01-05","currentAmt":62000.0,"inst":31.0},{"code":243,"account":"020097920978","name":"D DEEPU RANI","aslass":"075969","amount":3000.0,"nextDue":"2026-08-08","opening":"2024-01-08","currentAmt":93000.0,"inst":31.0},{"code":244,"account":"020097922807","name":"A ARUNA DEVI","aslass":"075968","amount":5000.0,"nextDue":"2026-08-08","opening":"2024-01-08","currentAmt":155000.0,"inst":31.0},{"code":245,"account":"020097992611","name":"SARLA DEVI","aslass":"075970","amount":5000.0,"nextDue":"2026-08-08","opening":"2024-01-08","currentAmt":155000.0,"inst":31.0},{"code":246,"account":"020098233629","name":"NISHA JINDAL","aslass":"075971","amount":18000.0,"nextDue":"2026-08-10","opening":"2024-01-10","currentAmt":558000.0,"inst":31.0},{"code":247,"account":"020098361793","name":"SUMAN RANI","aslass":"075973","amount":500.0,"nextDue":"2026-08-11","opening":"2024-01-11","currentAmt":15500.0,"inst":31.0},{"code":248,"account":"020098368994","name":"S SUNITA","aslass":"075972","amount":5000.0,"nextDue":"2026-08-11","opening":"2024-01-11","currentAmt":155000.0,"inst":31.0},{"code":249,"account":"020099123528","name":"BIMLA DEVI","aslass":"075975","amount":500.0,"nextDue":"2026-08-18","opening":"2024-01-18","currentAmt":15500.0,"inst":31.0},{"code":250,"account":"020099125219","name":"JOGINDER","aslass":"075974","amount":7500.0,"nextDue":"2026-07-18","opening":"2024-01-18","currentAmt":225000.0,"inst":30.0},{"code":251,"account":"020100230751","name":"VIMLESH","aslass":"078001","amount":5000.0,"nextDue":"2026-07-25","opening":"2024-01-25","currentAmt":150000.0,"inst":30.0},{"code":252,"account":"020101733545","name":"RAJESH KUMAR","aslass":"078003","amount":1000.0,"nextDue":"2026-08-05","opening":"2024-02-05","currentAmt":30000.0,"inst":30.0},{"code":253,"account":"020101750108","name":"RAJESH KUMAR","aslass":"078002","amount":5550.0,"nextDue":"2026-08-05","opening":"2024-02-05","currentAmt":166500.0,"inst":30.0},{"code":254,"account":"020102351264","name":"AJAY BANSAL","aslass":"078004","amount":3000.0,"nextDue":"2026-08-09","opening":"2024-02-09","currentAmt":90000.0,"inst":30.0},{"code":255,"account":"020102352189","name":"SATISH KUMAR","aslass":"078005","amount":2000.0,"nextDue":"2026-07-09","opening":"2024-02-09","currentAmt":58000.0,"inst":29.0},{"code":256,"account":"020103694384","name":"USHA RANI","aslass":"078007","amount":3000.0,"nextDue":"2026-12-19","opening":"2024-02-19","currentAmt":102000.0,"inst":34.0},{"code":257,"account":"020103852682","name":"KRISHNA DEVI","aslass":"078006","amount":3000.0,"nextDue":"2027-02-20","opening":"2024-02-20","currentAmt":108000.0,"inst":36.0},{"code":258,"account":"020106514838","name":"RAKESH","aslass":"078008","amount":5000.0,"nextDue":"2026-07-29","opening":"2024-02-29","currentAmt":145000.0,"inst":29.0},{"code":259,"account":"020107103469","name":"KAMLA DEVI","aslass":"078009","amount":1000.0,"nextDue":"2027-04-05","opening":"2024-03-05","currentAmt":37000.0,"inst":37.0},{"code":260,"account":"020107215941","name":"PARVEEN","aslass":"078010","amount":7000.0,"nextDue":"2026-08-06","opening":"2024-03-06","currentAmt":203000.0,"inst":29.0},{"code":261,"account":"020107729004","name":"A ARUNA DEVI","aslass":"078012","amount":5000.0,"nextDue":"2026-08-09","opening":"2024-03-09","currentAmt":145000.0,"inst":29.0},{"code":262,"account":"020107736101","name":"BHIM SAIN","aslass":"078011","amount":5000.0,"nextDue":"2026-08-09","opening":"2024-03-09","currentAmt":145000.0,"inst":29.0},{"code":263,"account":"020108063237","name":"ANURAG BANSAL","aslass":"078013","amount":5000.0,"nextDue":"2026-08-12","opening":"2024-03-12","currentAmt":145000.0,"inst":29.0},{"code":264,"account":"020111815116","name":"SUNITA DEVI","aslass":"078014","amount":5000.0,"nextDue":"2026-07-27","opening":"2024-03-27","currentAmt":140000.0,"inst":28.0},{"code":265,"account":"020112145791","name":"SULEKHA SINGHAL","aslass":"07816","amount":4000.0,"nextDue":"2026-07-28","opening":"2024-03-28","currentAmt":112000.0,"inst":28.0},{"code":266,"account":"020112152371","name":"AARTI","aslass":"078017","amount":2000.0,"nextDue":"2027-01-28","opening":"2024-03-28","currentAmt":68000.0,"inst":34.0},{"code":267,"account":"020112234897","name":"NIKHIL AGGARWAL","aslass":"078015","amount":4000.0,"nextDue":"2026-07-28","opening":"2024-03-28","currentAmt":112000.0,"inst":28.0},{"code":268,"account":"020113043666","name":"SUNITA","aslass":"078019","amount":2000.0,"nextDue":"2026-08-06","opening":"2024-04-06","currentAmt":56000.0,"inst":28.0},{"code":269,"account":"020113046719","name":"SUNITA","aslass":"078018","amount":10000.0,"nextDue":"2026-08-06","opening":"2024-04-06","currentAmt":280000.0,"inst":28.0},{"code":270,"account":"020113521593","name":"SWEETY AGGARWAL","aslass":"078020","amount":2000.0,"nextDue":"2026-08-13","opening":"2024-04-13","currentAmt":56000.0,"inst":28.0},{"code":271,"account":"020113521866","name":"PREETI GUPTA","aslass":"044891","amount":1000.0,"nextDue":"2026-08-13","opening":"2024-04-13","currentAmt":28000.0,"inst":28.0},{"code":272,"account":"020113523141","name":"ANUPAMA GUPTA","aslass":"078013","amount":2000.0,"nextDue":"2027-04-13","opening":"2024-04-13","currentAmt":72000.0,"inst":36.0},{"code":273,"account":"020114638584","name":"GURU CHARAN","aslass":"040481","amount":3000.0,"nextDue":"2026-07-26","opening":"2024-04-26","currentAmt":81000.0,"inst":27.0},{"code":274,"account":"020114976349","name":"MOHAN CHANDER","aslass":"040483","amount":500.0,"nextDue":"2026-08-30","opening":"2024-04-30","currentAmt":14000.0,"inst":28.0},{"code":275,"account":"020114978058","name":"PARWATI","aslass":"040482","amount":1000.0,"nextDue":"2026-08-30","opening":"2024-04-30","currentAmt":28000.0,"inst":28.0},{"code":276,"account":"020115266928","name":"SITA DEVI","aslass":"040485","amount":1000.0,"nextDue":"2026-08-04","opening":"2024-05-04","currentAmt":27000.0,"inst":27.0},{"code":277,"account":"020115267191","name":"SITA DEVI","aslass":"040484","amount":1000.0,"nextDue":"2026-08-04","opening":"2024-05-04","currentAmt":27000.0,"inst":27.0},{"code":278,"account":"020115609997","name":"TEENA GOYAL","aslass":"040490","amount":500.0,"nextDue":"2027-05-09","opening":"2024-05-09","currentAmt":18000.0,"inst":36.0},{"code":279,"account":"020115611971","name":"SUNITA GOYAL","aslass":"040488","amount":4000.0,"nextDue":"2026-08-09","opening":"2024-05-09","currentAmt":108000.0,"inst":27.0},{"code":280,"account":"020115613945","name":"KAILASH CHANDER","aslass":"040486","amount":4000.0,"nextDue":"2026-08-09","opening":"2024-05-09","currentAmt":108000.0,"inst":27.0},{"code":281,"account":"020115614219","name":"MOHIT GOYAL","aslass":"040489","amount":3000.0,"nextDue":"2026-08-09","opening":"2024-05-09","currentAmt":81000.0,"inst":27.0},{"code":282,"account":"020115614775","name":"MANOJ GOYAL","aslass":"040487","amount":3000.0,"nextDue":"2026-08-09","opening":"2024-05-09","currentAmt":81000.0,"inst":27.0},{"code":283,"account":"020115615753","name":"KULDEEP SHARMA","aslass":"040491","amount":1000.0,"nextDue":"2026-08-09","opening":"2024-05-09","currentAmt":27000.0,"inst":27.0},{"code":284,"account":"020117191176","name":"AAYUSH TUTEJA","aslass":"040493","amount":5000.0,"nextDue":"2026-08-27","opening":"2024-05-27","currentAmt":135000.0,"inst":27.0},{"code":285,"account":"020117410416","name":"MANJU DEVI","aslass":"078020","amount":3000.0,"nextDue":"2026-07-29","opening":"2024-05-29","currentAmt":78000.0,"inst":26.0},{"code":286,"account":"020117672894","name":"SURESH","aslass":"040157","amount":1000.0,"nextDue":"2026-08-31","opening":"2024-05-31","currentAmt":27000.0,"inst":27.0},{"code":287,"account":"020118556769","name":"SONU BANSAL","aslass":"040152","amount":4000.0,"nextDue":"2026-07-12","opening":"2024-06-12","currentAmt":100000.0,"inst":25.0},{"code":288,"account":"020118559987","name":"USHA RANI","aslass":"040153","amount":1000.0,"nextDue":"2026-07-12","opening":"2024-06-12","currentAmt":25000.0,"inst":25.0},{"code":289,"account":"020169462600","name":"NEHA","aslass":"16504","amount":2000.0,"nextDue":"2026-08-12","opening":"2025-08-12","currentAmt":24000.0,"inst":12.0},{"code":290,"account":"020119614556","name":"SHAKUNTLA JANGRA","aslass":"040492","amount":10000.0,"nextDue":"2026-10-22","opening":"2024-06-22","currentAmt":280000.0,"inst":28.0},{"code":291,"account":"020119616189","name":"SHAKUNTLA JANGRA","aslass":"040493","amount":10000.0,"nextDue":"2026-10-22","opening":"2024-06-22","currentAmt":280000.0,"inst":28.0},{"code":292,"account":"020120513507","name":"SHUBHAM JAIN","aslass":"040156","amount":1000.0,"nextDue":"2026-08-29","opening":"2024-06-29","currentAmt":26000.0,"inst":26.0},{"code":293,"account":"020120513744","name":"MANISHA","aslass":"040158","amount":2000.0,"nextDue":"2026-08-29","opening":"2024-06-29","currentAmt":52000.0,"inst":26.0},{"code":294,"account":"020120563890","name":"VIDHI","aslass":"040155","amount":500.0,"nextDue":"2026-08-29","opening":"2024-06-29","currentAmt":13000.0,"inst":26.0},{"code":295,"account":"020120943192","name":"URMILA","aslass":"040157","amount":1000.0,"nextDue":"2026-08-04","opening":"2024-07-04","currentAmt":25000.0,"inst":25.0},{"code":296,"account":"020121086593","name":"LATA RANI","aslass":"40160","amount":500.0,"nextDue":"2026-07-05","opening":"2024-07-05","currentAmt":12000.0,"inst":24.0},{"code":297,"account":"020121087162","name":"RAJESH KUMAR","aslass":"040164","amount":1000.0,"nextDue":"2026-08-05","opening":"2024-07-05","currentAmt":25000.0,"inst":25.0},{"code":298,"account":"020121087355","name":"A ARUNA DEVI","aslass":"40163","amount":10000.0,"nextDue":"2026-08-05","opening":"2024-07-05","currentAmt":250000.0,"inst":25.0},{"code":299,"account":"020121087982","name":"KIRAN","aslass":"040165","amount":1000.0,"nextDue":"2026-07-05","opening":"2024-07-05","currentAmt":24000.0,"inst":24.0},{"code":300,"account":"020121100803","name":"AAYANSH JAIN","aslass":"024479","amount":2000.0,"nextDue":"2026-07-05","opening":"2024-07-05","currentAmt":48000.0,"inst":24.0},{"code":301,"account":"020121103081","name":"BANARSI DEVI","aslass":"040162","amount":1000.0,"nextDue":"2026-08-05","opening":"2024-07-05","currentAmt":25000.0,"inst":25.0},{"code":302,"account":"020121593100","name":"AMIT GOYAL","aslass":"041177","amount":2000.0,"nextDue":"2026-10-11","opening":"2024-07-11","currentAmt":54000.0,"inst":27.0},{"code":303,"account":"020121859635","name":"HARSHUL JAIN","aslass":"041178","amount":5000.0,"nextDue":"2026-08-15","opening":"2024-07-15","currentAmt":125000.0,"inst":25.0},{"code":304,"account":"020122857276","name":"BHOOP SINGH","aslass":"041179","amount":2000.0,"nextDue":"2026-08-23","opening":"2024-07-23","currentAmt":50000.0,"inst":25.0},{"code":305,"account":"020122860519","name":"GAJAL GOYAL","aslass":"41180","amount":1000.0,"nextDue":"2026-07-23","opening":"2024-07-23","currentAmt":24000.0,"inst":24.0},{"code":306,"account":"020123689989","name":"CASHEE","aslass":"041181","amount":1000.0,"nextDue":"2026-07-29","opening":"2024-07-29","currentAmt":24000.0,"inst":24.0},{"code":307,"account":"020124659185","name":"BHESH BAHADUR","aslass":"041183","amount":1000.0,"nextDue":"2026-07-08","opening":"2024-08-08","currentAmt":23000.0,"inst":23.0},{"code":308,"account":"020125391767","name":"NIRMLA DEVI","aslass":"041184","amount":1000.0,"nextDue":"2026-07-16","opening":"2024-08-16","currentAmt":23000.0,"inst":23.0},{"code":309,"account":"020125906449","name":"SHEETAL","aslass":"041186","amount":2000.0,"nextDue":"2026-07-21","opening":"2024-08-21","currentAmt":46000.0,"inst":23.0},{"code":310,"account":"020125908051","name":"MEENU","aslass":"041185","amount":500.0,"nextDue":"2026-07-21","opening":"2024-08-21","currentAmt":11500.0,"inst":23.0},{"code":311,"account":"020126289224","name":"RICHA SINGAL","aslass":"041188","amount":2000.0,"nextDue":"2026-08-23","opening":"2024-08-23","currentAmt":48000.0,"inst":24.0},{"code":312,"account":"020126290211","name":"KANISHKA AGGARWAL","aslass":"040151","amount":3000.0,"nextDue":"2026-08-23","opening":"2024-08-23","currentAmt":72000.0,"inst":24.0},{"code":313,"account":"020126291105","name":"VATSAL AGGARWAL","aslass":"041187","amount":3000.0,"nextDue":"2026-08-23","opening":"2024-08-23","currentAmt":72000.0,"inst":24.0},{"code":314,"account":"020126340458","name":"AVNI GOYAL","aslass":"041189","amount":2000.0,"nextDue":"2026-08-23","opening":"2024-08-23","currentAmt":48000.0,"inst":24.0},{"code":315,"account":"020126340879","name":"BIMLESH","aslass":"041190","amount":1000.0,"nextDue":"2026-07-23","opening":"2024-08-23","currentAmt":23000.0,"inst":23.0},{"code":316,"account":"020126462421","name":"ABHISHEK","aslass":"041491","amount":2500.0,"nextDue":"2026-08-24","opening":"2024-08-24","currentAmt":60000.0,"inst":24.0},{"code":317,"account":"020127177924","name":"CHANDNI","aslass":"041492","amount":5000.0,"nextDue":"2026-07-30","opening":"2024-08-30","currentAmt":115000.0,"inst":23.0},{"code":318,"account":"020127979260","name":"ARUNA DEVI","aslass":"041493","amount":10000.0,"nextDue":"2026-08-07","opening":"2024-09-07","currentAmt":230000.0,"inst":23.0},{"code":319,"account":"020128751984","name":"ANITA","aslass":"041496","amount":1000.0,"nextDue":"2026-05-18","opening":"2024-09-18","currentAmt":20000.0,"inst":20.0},{"code":320,"account":"020128754212","name":"RAJ BALA","aslass":"041494","amount":1000.0,"nextDue":"2026-06-18","opening":"2024-09-18","currentAmt":21000.0,"inst":21.0},{"code":321,"account":"020128756766","name":"KIRAN SHARMA","aslass":"041497","amount":1000.0,"nextDue":"2026-08-18","opening":"2024-09-18","currentAmt":23000.0,"inst":23.0},{"code":322,"account":"020128764360","name":"ASHU RANI","aslass":"041495","amount":1000.0,"nextDue":"2026-06-18","opening":"2024-09-18","currentAmt":21000.0,"inst":21.0},{"code":323,"account":"020129704672","name":"SANDEEPKUMAR","aslass":"041498","amount":1000.0,"nextDue":"2026-10-25","opening":"2024-09-25","currentAmt":25000.0,"inst":25.0},{"code":324,"account":"020130419836","name":"RAVI CHHABRA","aslass":"041499","amount":3000.0,"nextDue":"2026-07-30","opening":"2024-09-30","currentAmt":66000.0,"inst":22.0},{"code":325,"account":"020131120738","name":"SHIPRA","aslass":"041500","amount":1000.0,"nextDue":"2026-07-08","opening":"2024-10-08","currentAmt":21000.0,"inst":21.0},{"code":326,"account":"020131820850","name":"SHANKUNTLA DEVI JAIN","aslass":"041501","amount":2000.0,"nextDue":"2026-08-16","opening":"2024-10-16","currentAmt":44000.0,"inst":22.0},{"code":327,"account":"020132560587","name":"CHHAYA DEVI","aslass":"041502","amount":1000.0,"nextDue":"2026-10-22","opening":"2024-10-22","currentAmt":24000.0,"inst":24.0},{"code":328,"account":"020132574087","name":"SHRUTI GUPTA","aslass":"041503","amount":3000.0,"nextDue":"2026-08-22","opening":"2024-10-22","currentAmt":66000.0,"inst":22.0},{"code":329,"account":"020133620395","name":"KAUSHILYA RANI","aslass":"041504","amount":15000.0,"nextDue":"2026-08-29","opening":"2024-10-29","currentAmt":330000.0,"inst":22.0},{"code":330,"account":"020133622949","name":"KIRAN KUMARI","aslass":"041505","amount":500.0,"nextDue":"2026-07-29","opening":"2024-10-29","currentAmt":10500.0,"inst":21.0},{"code":331,"account":"020134274934","name":"KIRAN W/OMANOJ KR","aslass":"041506","amount":5000.0,"nextDue":"2026-08-07","opening":"2024-11-07","currentAmt":105000.0,"inst":21.0},{"code":332,"account":"020134293448","name":"MONIKA","aslass":"041509","amount":3000.0,"nextDue":"2026-08-07","opening":"2024-11-07","currentAmt":63000.0,"inst":21.0},{"code":333,"account":"020134293569","name":"BABITA DEVI","aslass":"028086","amount":1000.0,"nextDue":"2026-08-07","opening":"2024-11-07","currentAmt":21000.0,"inst":21.0},{"code":334,"account":"020134637366","name":"KIRAN KUMARI","aslass":"41508","amount":500.0,"nextDue":"2026-07-12","opening":"2024-11-12","currentAmt":10000.0,"inst":20.0},{"code":335,"account":"020134638615","name":"BHIM SINGH","aslass":"041507","amount":5000.0,"nextDue":"2026-08-12","opening":"2024-11-12","currentAmt":105000.0,"inst":21.0},{"code":336,"account":"020135223186","name":"SUNIL GARG","aslass":"034229","amount":1500.0,"nextDue":"2026-07-19","opening":"2024-11-19","currentAmt":30000.0,"inst":20.0},{"code":337,"account":"020135224835","name":"KAMALA RANI","aslass":"034228","amount":1000.0,"nextDue":"2026-08-19","opening":"2024-11-19","currentAmt":21000.0,"inst":21.0},{"code":338,"account":"020135774731","name":"PREETI","aslass":"024468","amount":2000.0,"nextDue":"2026-04-22","opening":"2024-11-22","currentAmt":34000.0,"inst":17.0},{"code":339,"account":"020135775134","name":"REETA","aslass":"024467","amount":500.0,"nextDue":"2026-07-22","opening":"2024-11-22","currentAmt":10000.0,"inst":20.0},{"code":340,"account":"020136021869","name":"PUSHPA","aslass":"024469","amount":3000.0,"nextDue":"2026-11-23","opening":"2024-11-23","currentAmt":72000.0,"inst":24.0},{"code":341,"account":"020172573702","name":"DEEPANSHU GARG","aslass":"016515","amount":5000.0,"nextDue":"2026-08-04","opening":"2025-09-04","currentAmt":55000.0,"inst":11.0},{"code":342,"account":"020137381853","name":"DHARMVEER GAUTAM","aslass":"024475","amount":5000.0,"nextDue":"2026-08-03","opening":"2024-12-03","currentAmt":100000.0,"inst":20.0},{"code":343,"account":"020220215279","name":"DEEPAK KUMAR","aslass":null,"amount":2000.0,"nextDue":"2026-07-18","opening":"2026-05-18","currentAmt":4000.0,"inst":2.0},{"code":344,"account":"020137385757","name":"ANUJ","aslass":"024473","amount":5000.0,"nextDue":"2026-08-03","opening":"2024-12-03","currentAmt":100000.0,"inst":20.0},{"code":345,"account":"020137385854","name":"AKSHAY","aslass":"024472","amount":5000.0,"nextDue":"2026-08-03","opening":"2024-12-03","currentAmt":100000.0,"inst":20.0},{"code":346,"account":"020137492540","name":"RIYA GUPTA","aslass":"028076","amount":5000.0,"nextDue":"2026-08-04","opening":"2024-12-04","currentAmt":100000.0,"inst":20.0},{"code":347,"account":"020137495940","name":"NEHA GOYAL","aslass":"024476","amount":2000.0,"nextDue":"2027-05-04","opening":"2024-12-04","currentAmt":58000.0,"inst":29.0},{"code":348,"account":"020138738172","name":"PRISHA","aslass":"024477","amount":5000.0,"nextDue":"2026-08-17","opening":"2024-12-17","currentAmt":100000.0,"inst":20.0},{"code":349,"account":"020138744425","name":"GOPAL SINGH","aslass":"024478","amount":3000.0,"nextDue":"2026-08-17","opening":"2024-12-17","currentAmt":60000.0,"inst":20.0},{"code":350,"account":"020139083627","name":"BIN MAYA","aslass":"028079","amount":1000.0,"nextDue":"2026-06-19","opening":"2024-12-19","currentAmt":18000.0,"inst":18.0},{"code":351,"account":"020139476261","name":"PARTH","aslass":"028080","amount":2000.0,"nextDue":"2026-08-21","opening":"2024-12-21","currentAmt":40000.0,"inst":20.0},{"code":352,"account":"020139477612","name":"BINDU DEVI","aslass":"024474","amount":2000.0,"nextDue":"2026-08-21","opening":"2024-12-21","currentAmt":40000.0,"inst":20.0},{"code":353,"account":"020140059004","name":"UMESH JAIN","aslass":"028081","amount":1500.0,"nextDue":"2026-08-27","opening":"2024-12-27","currentAmt":30000.0,"inst":20.0},{"code":354,"account":"020140808261","name":"MAMTA","aslass":"028077","amount":2000.0,"nextDue":"2026-08-02","opening":"2025-01-02","currentAmt":38000.0,"inst":19.0},{"code":355,"account":"020140936946","name":"NISHU","aslass":"028078","amount":2000.0,"nextDue":"2026-07-03","opening":"2025-01-03","currentAmt":36000.0,"inst":18.0},{"code":356,"account":"020140956520","name":"SAVITRI DEVI","aslass":"028082","amount":3000.0,"nextDue":"2026-08-03","opening":"2025-01-03","currentAmt":57000.0,"inst":19.0},{"code":357,"account":"020141200166","name":"J JYOTI","aslass":"028083","amount":1500.0,"nextDue":"2026-08-06","opening":"2025-01-06","currentAmt":28500.0,"inst":19.0},{"code":358,"account":"020141201144","name":"MONIKA","aslass":"028084","amount":1500.0,"nextDue":"2026-08-06","opening":"2025-01-06","currentAmt":28500.0,"inst":19.0},{"code":359,"account":"020141344385","name":"PATASO DEVI","aslass":"028085","amount":5000.0,"nextDue":"2026-08-07","opening":"2025-01-07","currentAmt":95000.0,"inst":19.0},{"code":360,"account":"020142885806","name":"GOBIND CHAND ASIJA","aslass":"028088","amount":5000.0,"nextDue":"2026-07-18","opening":"2025-01-18","currentAmt":90000.0,"inst":18.0},{"code":361,"account":"020169462757","name":"S SAROJ JAIN","aslass":"016505","amount":1000.0,"nextDue":"2026-08-12","opening":"2025-08-12","currentAmt":12000.0,"inst":12.0},{"code":362,"account":"020142894944","name":"USHA RANI","aslass":"028092","amount":1000.0,"nextDue":"2026-08-18","opening":"2025-01-18","currentAmt":19000.0,"inst":19.0},{"code":363,"account":"020143731083","name":"SHUBHAM","aslass":"028087","amount":3000.0,"nextDue":"2026-07-23","opening":"2025-01-23","currentAmt":54000.0,"inst":18.0},{"code":364,"account":"020143870426","name":"SUMAN GOYAL","aslass":"28091","amount":2000.0,"nextDue":"2026-08-24","opening":"2025-01-24","currentAmt":38000.0,"inst":19.0},{"code":365,"account":"020144864529","name":"REENU","aslass":"028093","amount":1500.0,"nextDue":"2026-07-29","opening":"2025-01-29","currentAmt":27000.0,"inst":18.0},{"code":366,"account":"020145242192","name":"SUBHASH CHANDER","aslass":"28094","amount":3000.0,"nextDue":"2026-07-31","opening":"2025-01-31","currentAmt":54000.0,"inst":18.0},{"code":367,"account":"020147363323","name":"SANDEEP AGGARWAL","aslass":"014570","amount":20000.0,"nextDue":"2026-07-17","opening":"2025-02-17","currentAmt":340000.0,"inst":17.0},{"code":368,"account":"020147496305","name":"YASHVI","aslass":"014567","amount":500.0,"nextDue":"2026-05-18","opening":"2025-02-18","currentAmt":7500.0,"inst":15.0},{"code":369,"account":"020147499434","name":"YASHVI","aslass":"014568","amount":500.0,"nextDue":"2026-05-18","opening":"2025-02-18","currentAmt":7500.0,"inst":15.0},{"code":370,"account":"020147509755","name":"NARESH SHARMA","aslass":"014557","amount":1000.0,"nextDue":"2026-07-18","opening":"2025-02-18","currentAmt":17000.0,"inst":17.0},{"code":371,"account":"020147514384","name":"VIBHOR AGARWAL","aslass":"014569","amount":500.0,"nextDue":"2026-07-18","opening":"2025-02-18","currentAmt":8500.0,"inst":17.0},{"code":372,"account":"020147516618","name":"SAAVI TAAK","aslass":"014566","amount":500.0,"nextDue":"2026-07-18","opening":"2025-02-18","currentAmt":8500.0,"inst":17.0},{"code":373,"account":"020148036335","name":"SITA DEVI","aslass":"014556","amount":500.0,"nextDue":"2027-02-20","opening":"2025-02-20","currentAmt":12000.0,"inst":24.0},{"code":374,"account":"020148036439","name":"RAHUL","aslass":"014558","amount":2000.0,"nextDue":"2026-08-20","opening":"2025-02-20","currentAmt":36000.0,"inst":18.0},{"code":375,"account":"020149444875","name":"PREETI GOYAL","aslass":"014560","amount":3000.0,"nextDue":"2026-07-28","opening":"2025-02-28","currentAmt":51000.0,"inst":17.0},{"code":376,"account":"020174167101","name":"ALPA GUPTA","aslass":"055694","amount":5000.0,"nextDue":"2026-08-17","opening":"2025-09-17","currentAmt":55000.0,"inst":11.0},{"code":377,"account":"020150413031","name":"SUNITA","aslass":"028096","amount":2000.0,"nextDue":"2026-08-06","opening":"2025-03-06","currentAmt":34000.0,"inst":17.0},{"code":378,"account":"020150857662","name":"POORNMASI","aslass":"014561","amount":2000.0,"nextDue":"2026-05-08","opening":"2025-03-08","currentAmt":28000.0,"inst":14.0},{"code":379,"account":"020152258780","name":"NAVEEN","aslass":"014563","amount":6000.0,"nextDue":"2026-08-17","opening":"2025-03-17","currentAmt":102000.0,"inst":17.0},{"code":380,"account":"020153136742","name":"KULDEEP","aslass":"014565","amount":1000.0,"nextDue":"2026-08-20","opening":"2025-03-20","currentAmt":17000.0,"inst":17.0},{"code":381,"account":"020153138679","name":"PINKY JAIN","aslass":"014559","amount":2000.0,"nextDue":"2026-08-20","opening":"2025-03-20","currentAmt":34000.0,"inst":17.0},{"code":382,"account":"020153283033","name":"MANISHA","aslass":"014564","amount":2000.0,"nextDue":"2026-08-20","opening":"2025-03-20","currentAmt":34000.0,"inst":17.0},{"code":383,"account":"020154618443","name":"SHANKUNTLA DEVI","aslass":"028097","amount":1000.0,"nextDue":"2027-03-25","opening":"2025-03-25","currentAmt":24000.0,"inst":24.0},{"code":384,"account":"020155060915","name":"SUMAN DEVI","aslass":"028100","amount":5000.0,"nextDue":"2026-07-27","opening":"2025-03-27","currentAmt":80000.0,"inst":16.0},{"code":385,"account":"020155067368","name":"ANUJ","aslass":"028098","amount":5000.0,"nextDue":"2026-07-27","opening":"2025-03-27","currentAmt":80000.0,"inst":16.0},{"code":386,"account":"020155068648","name":"PRERNA","aslass":"028049","amount":5000.0,"nextDue":"2026-07-27","opening":"2025-03-27","currentAmt":80000.0,"inst":16.0},{"code":387,"account":"020155071038","name":"SHALU","aslass":"014562","amount":5000.0,"nextDue":"2026-07-27","opening":"2025-03-27","currentAmt":80000.0,"inst":16.0},{"code":388,"account":"020155947725","name":"TANISHQ","aslass":"029751","amount":5000.0,"nextDue":"2026-07-29","opening":"2025-03-29","currentAmt":80000.0,"inst":16.0},{"code":389,"account":"020156444845","name":"SAVITRI DEVI","aslass":"29753","amount":20000.0,"nextDue":"2026-08-04","opening":"2025-04-04","currentAmt":320000.0,"inst":16.0},{"code":390,"account":"020156604168","name":"PAMAL KUMAR","aslass":"29752","amount":2000.0,"nextDue":"2026-07-08","opening":"2025-04-08","currentAmt":30000.0,"inst":15.0},{"code":391,"account":"020156604466","name":"POONAM","aslass":"29754","amount":2000.0,"nextDue":"2026-08-08","opening":"2025-04-08","currentAmt":32000.0,"inst":16.0},{"code":392,"account":"020156786093","name":"KAMLESH JAIN","aslass":"29755","amount":5550.0,"nextDue":"2027-04-11","opening":"2025-04-11","currentAmt":133200.0,"inst":24.0},{"code":393,"account":"020157206908","name":"BIMLA DEVI JAIN","aslass":"29756","amount":2000.0,"nextDue":"2026-08-17","opening":"2025-04-17","currentAmt":32000.0,"inst":16.0},{"code":394,"account":"020157208165","name":"SHANKUNTLA DEVI","aslass":"097522","amount":1000.0,"nextDue":"2027-04-17","opening":"2025-04-17","currentAmt":24000.0,"inst":24.0},{"code":395,"account":"020157440403","name":"SONIA","aslass":"29758","amount":3000.0,"nextDue":"2026-08-21","opening":"2025-04-21","currentAmt":48000.0,"inst":16.0},{"code":396,"account":"020158135828","name":"SUDEEP SHARMA","aslass":"29759","amount":2000.0,"nextDue":"2026-07-26","opening":"2025-04-26","currentAmt":30000.0,"inst":15.0},{"code":397,"account":"020159029330","name":"SHRUTI GUPTA","aslass":"29762","amount":2000.0,"nextDue":"2026-08-06","opening":"2025-05-06","currentAmt":30000.0,"inst":15.0},{"code":398,"account":"020159029946","name":"PUSHPA SINGAL","aslass":"029764","amount":5000.0,"nextDue":"2026-08-06","opening":"2025-05-06","currentAmt":75000.0,"inst":15.0},{"code":399,"account":"020159030600","name":"YOGITA SINGAL","aslass":"29763","amount":5000.0,"nextDue":"2026-08-06","opening":"2025-05-06","currentAmt":75000.0,"inst":15.0},{"code":400,"account":"020159031129","name":"ANGEL","aslass":"29760","amount":2000.0,"nextDue":"2026-06-06","opening":"2025-05-06","currentAmt":26000.0,"inst":13.0},{"code":401,"account":"020159036357","name":"SANGEETA JAIN","aslass":"368169","amount":3000.0,"nextDue":"2027-01-06","opening":"2025-05-06","currentAmt":60000.0,"inst":20.0},{"code":402,"account":"020159284436","name":"SHRUTI GARG","aslass":"29762","amount":1000.0,"nextDue":"2026-07-09","opening":"2025-05-09","currentAmt":14000.0,"inst":14.0},{"code":403,"account":"020159285635","name":"SUSHILA","aslass":"016511","amount":2000.0,"nextDue":"2026-08-09","opening":"2025-05-09","currentAmt":30000.0,"inst":15.0},{"code":404,"account":"020160314563","name":"KANIKA","aslass":"029767","amount":20000.0,"nextDue":"2026-11-22","opening":"2025-05-22","currentAmt":360000.0,"inst":18.0},{"code":405,"account":"020161106690","name":"MADAN LAL","aslass":"29768","amount":1000.0,"nextDue":"2026-07-29","opening":"2025-05-29","currentAmt":14000.0,"inst":14.0},{"code":406,"account":"020162188724","name":"CHANDERKANT SHARMA","aslass":"29769","amount":5000.0,"nextDue":"2026-08-10","opening":"2025-06-10","currentAmt":70000.0,"inst":14.0},{"code":407,"account":"020162784857","name":"PRANAV JAIN","aslass":"29770","amount":2000.0,"nextDue":"2026-08-17","opening":"2025-06-17","currentAmt":28000.0,"inst":14.0},{"code":408,"account":"020162863206","name":"AARTI","aslass":"29771","amount":5000.0,"nextDue":"2027-06-17","opening":"2025-06-17","currentAmt":120000.0,"inst":24.0},{"code":409,"account":"020162973130","name":"TARUN KATHURIA","aslass":"29772","amount":5000.0,"nextDue":"2026-07-18","opening":"2025-06-18","currentAmt":65000.0,"inst":13.0},{"code":410,"account":"020163291490","name":"PARVINDER KUMAR","aslass":"029773","amount":5000.0,"nextDue":"2026-07-20","opening":"2025-06-20","currentAmt":65000.0,"inst":13.0},{"code":411,"account":"020164183204","name":"SUMAN GOYAL","aslass":"029774","amount":3000.0,"nextDue":"2026-03-26","opening":"2025-06-26","currentAmt":27000.0,"inst":9.0},{"code":412,"account":"020165993919","name":"RASMI","aslass":"29775","amount":1000.0,"nextDue":"2026-08-08","opening":"2025-07-08","currentAmt":13000.0,"inst":13.0},{"code":413,"account":"020165996167","name":"S SUNITA","aslass":"29776","amount":5000.0,"nextDue":"2026-08-08","opening":"2025-07-08","currentAmt":65000.0,"inst":13.0},{"code":414,"account":"020167027756","name":"BHASKAR","aslass":"016510","amount":1000.0,"nextDue":"2026-07-17","opening":"2025-07-17","currentAmt":12000.0,"inst":12.0},{"code":415,"account":"020167189362","name":"SONALI","aslass":"016509","amount":1000.0,"nextDue":"2026-07-18","opening":"2025-07-18","currentAmt":12000.0,"inst":12.0},{"code":416,"account":"020167416010","name":"SHUBHAM JAIN","aslass":"016508","amount":6000.0,"nextDue":"2026-07-21","opening":"2025-07-21","currentAmt":72000.0,"inst":12.0},{"code":417,"account":"020169528952","name":"POONAM","aslass":"016506","amount":10000.0,"nextDue":"2026-08-13","opening":"2025-08-13","currentAmt":120000.0,"inst":12.0},{"code":418,"account":"020171419085","name":"ANUJ MALHOTRA","aslass":"029765","amount":15000.0,"nextDue":"2026-08-28","opening":"2025-08-28","currentAmt":180000.0,"inst":12.0},{"code":419,"account":"020172578388","name":"S SUNITA","aslass":"016513","amount":2000.0,"nextDue":"2026-08-04","opening":"2025-09-04","currentAmt":22000.0,"inst":11.0},{"code":420,"account":"020178609320","name":"SAVITRI","aslass":"055696","amount":10000.0,"nextDue":"2026-08-16","opening":"2025-10-16","currentAmt":100000.0,"inst":10.0},{"code":421,"account":"020178864422","name":"RADHEY SHYAM","aslass":"055698","amount":3000.0,"nextDue":"2026-07-17","opening":"2025-10-17","currentAmt":27000.0,"inst":9.0},{"code":422,"account":"020185326197","name":"DIMPLE GOENKA","aslass":"055706","amount":2000.0,"nextDue":"2026-08-28","opening":"2025-11-28","currentAmt":18000.0,"inst":9.0},{"code":423,"account":"020192538259","name":"KAMLESH RANI","aslass":"041851","amount":5000.0,"nextDue":"2027-01-09","opening":"2026-01-09","currentAmt":60000.0,"inst":12.0},{"code":424,"account":"020192813290","name":"KAUSHALYA DEVI","aslass":"041854","amount":5000.0,"nextDue":"2026-08-12","opening":"2026-01-12","currentAmt":35000.0,"inst":7.0},{"code":425,"account":"020198563554","name":"AMIT GOYAL","aslass":"089874","amount":2500.0,"nextDue":"2026-08-06","opening":"2026-02-06","currentAmt":15000.0,"inst":6.0},{"code":426,"account":"020198697855","name":"ASHOK KUMAR","aslass":"097507","amount":500.0,"nextDue":"2026-08-07","opening":"2026-02-07","currentAmt":3000.0,"inst":6.0},{"code":427,"account":"020217127478","name":"TARAMANI MITTAL","aslass":"368179","amount":6000.0,"nextDue":"2026-07-22","opening":"2026-04-22","currentAmt":18000.0,"inst":3.0},{"code":428,"account":"020217469539","name":"KANTA DEVI","aslass":"368180","amount":3000.0,"nextDue":"2026-09-24","opening":"2026-04-24","currentAmt":15000.0,"inst":5.0},{"code":429,"account":"020218591391","name":"KAILASH RANI GARG","aslass":"368181","amount":1000.0,"nextDue":"2026-08-04","opening":"2026-05-04","currentAmt":3000.0,"inst":3.0},{"code":430,"account":"020218594138","name":"MADHU","aslass":null,"amount":3000.0,"nextDue":"2026-08-04","opening":"2026-05-04","currentAmt":9000.0,"inst":3.0},{"code":431,"account":"020218887524","name":"BABLI","aslass":null,"amount":5000.0,"nextDue":"2026-08-07","opening":"2026-05-07","currentAmt":15000.0,"inst":3.0},{"code":433,"account":"020220240609","name":"KAMLESH RANI","aslass":null,"amount":4000.0,"nextDue":"2027-05-18","opening":"2026-05-18","currentAmt":48000.0,"inst":12.0},{"code":434,"account":"020227060518","name":"D DIVYA AGGARWAL","aslass":null,"amount":2000.0,"nextDue":"2026-09-27","opening":"2026-06-27","currentAmt":6000.0,"inst":3.0},{"code":435,"account":"020177328155","name":"ANUJ MALHOTRA","aslass":"055695","amount":15000.0,"nextDue":"2026-08-07","opening":"2025-10-07","currentAmt":150000.0,"inst":10.0},{"code":436,"account":"020179509507","name":"RANJAN TIWARI","aslass":"055699","amount":5000.0,"nextDue":"2026-07-23","opening":"2025-10-23","currentAmt":45000.0,"inst":9.0},{"code":437,"account":"3484608267","name":"PARUL JAIN","aslass":"088042","amount":2000.0,"nextDue":null,"opening":"2017-01-18","currentAmt":240000.0,"inst":120.0},{"code":438,"account":"3486227411","name":"HANUMAN BANSAL","aslass":"083245","amount":1000.0,"nextDue":"2026-07-19","opening":"2017-01-19","currentAmt":114000.0,"inst":114.0},{"code":439,"account":"020192822249","name":"CHANDER KANTA","aslass":"041853","amount":3000.0,"nextDue":"2026-08-12","opening":"2026-01-12","currentAmt":21000.0,"inst":7.0},{"code":440,"account":"3570646265","name":"PARUL JAIN","aslass":"044501","amount":1000.0,"nextDue":null,"opening":"2017-03-17","currentAmt":120000.0,"inst":120.0},{"code":441,"account":"3572612978","name":"SANTOSH RANI","aslass":"044605","amount":5000.0,"nextDue":"2026-08-18","opening":"2017-03-18","currentAmt":565000.0,"inst":113.0},{"code":442,"account":"3643144407","name":"MADHU SARDANA","aslass":"023059","amount":2000.0,"nextDue":"2026-08-02","opening":"2017-05-02","currentAmt":222000.0,"inst":111.0},{"code":443,"account":"3647451723","name":"SAROJ GARG","aslass":"044615","amount":1000.0,"nextDue":"2026-08-06","opening":"2017-05-06","currentAmt":111000.0,"inst":111.0},{"code":444,"account":"3671347245","name":"GITIKA","aslass":"075226","amount":1000.0,"nextDue":"2026-07-03","opening":"2017-06-03","currentAmt":109000.0,"inst":109.0},{"code":445,"account":"3675327083","name":"KAUSHALYA DEVI","aslass":"074078","amount":3000.0,"nextDue":"2026-08-08","opening":"2017-06-08","currentAmt":330000.0,"inst":110.0},{"code":446,"account":"3681824903","name":"M MOHIT JAIN","aslass":"083242","amount":6000.0,"nextDue":"2026-08-16","opening":"2017-06-16","currentAmt":660000.0,"inst":110.0},{"code":447,"account":"3710085480","name":"PUNEET SOOD","aslass":"074111","amount":1500.0,"nextDue":"2026-06-18","opening":"2017-07-18","currentAmt":160500.0,"inst":107.0},{"code":448,"account":"020184188364","name":"YASHIKA","aslass":"055705","amount":3000.0,"nextDue":"2026-05-22","opening":"2025-11-22","currentAmt":18000.0,"inst":6.0},{"code":449,"account":"3744903361","name":"RACHIT GARG","aslass":"079289","amount":1000.0,"nextDue":"2026-08-25","opening":"2017-08-25","currentAmt":108000.0,"inst":108.0},{"code":450,"account":"3744905709","name":"MANISH GARG","aslass":"005876","amount":1000.0,"nextDue":"2026-08-25","opening":"2017-08-25","currentAmt":108000.0,"inst":108.0},{"code":451,"account":"3818148483","name":"ANJU BALA","aslass":"007405","amount":1000.0,"nextDue":"2026-07-09","opening":"2017-11-09","currentAmt":104000.0,"inst":104.0},{"code":452,"account":"3852980797","name":"KAMLESH KHEMKA","aslass":"074863","amount":500.0,"nextDue":"2026-07-14","opening":"2017-12-14","currentAmt":51500.0,"inst":103.0},{"code":453,"account":"3860934607","name":"AMIT GOYAL","aslass":"008564","amount":1000.0,"nextDue":"2027-01-21","opening":"2017-12-21","currentAmt":109000.0,"inst":109.0},{"code":454,"account":"3901514461","name":"PRAMILA","aslass":"027725","amount":1000.0,"nextDue":"2026-06-23","opening":"2018-01-23","currentAmt":101000.0,"inst":101.0},{"code":455,"account":"3933905947","name":"DEEPAK KOHLI","aslass":"000071743","amount":5000.0,"nextDue":"2027-02-16","opening":"2018-02-16","currentAmt":540000.0,"inst":108.0},{"code":456,"account":"020177808163","name":"ARUNA DEVI","aslass":"055697","amount":10000.0,"nextDue":"2026-08-10","opening":"2025-10-10","currentAmt":100000.0,"inst":10.0},{"code":457,"account":"4016228922","name":"M MANJU SAINI","aslass":"082951","amount":1000.0,"nextDue":"2026-08-16","opening":"2018-04-16","currentAmt":100000.0,"inst":100.0},{"code":458,"account":"020218890198","name":"NEERU","aslass":null,"amount":2000.0,"nextDue":"2026-08-07","opening":"2026-05-07","currentAmt":6000.0,"inst":3.0},{"code":459,"account":"4042051624","name":"SANJAY KUMAR","aslass":"094189","amount":1000.0,"nextDue":"2026-07-16","opening":"2018-05-16","currentAmt":98000.0,"inst":98.0},{"code":460,"account":"4048661810","name":"NARESH KUMAR","aslass":"94190","amount":1000.0,"nextDue":"2026-07-23","opening":"2018-05-23","currentAmt":98000.0,"inst":98.0},{"code":461,"account":"4048668888","name":"SURENDER KATYAL","aslass":"94193","amount":1000.0,"nextDue":"2026-07-23","opening":"2018-05-23","currentAmt":98000.0,"inst":98.0},{"code":462,"account":"4092887020","name":"ANJANI KUMAR GARG","aslass":"095789","amount":5000.0,"nextDue":"2027-07-19","opening":"2018-07-19","currentAmt":540000.0,"inst":108.0},{"code":463,"account":"4092900439","name":"SATYA BALA GARG","aslass":"095791","amount":5000.0,"nextDue":"2027-07-19","opening":"2018-07-19","currentAmt":540000.0,"inst":108.0},{"code":464,"account":"4114710558","name":"RIBHA KUMARI","aslass":"091935","amount":5000.0,"nextDue":"2026-08-10","opening":"2018-08-10","currentAmt":480000.0,"inst":96.0},{"code":465,"account":"4135329739","name":"MANOJ SINGH","aslass":"016857","amount":500.0,"nextDue":"2026-10-01","opening":"2018-09-01","currentAmt":48500.0,"inst":97.0},{"code":466,"account":"4153774962","name":"NISHA RANI","aslass":"005866","amount":1000.0,"nextDue":"2026-08-24","opening":"2018-09-24","currentAmt":95000.0,"inst":95.0},{"code":467,"account":"4192531656","name":"NEHA JAIN","aslass":"016865","amount":5000.0,"nextDue":"2026-08-05","opening":"2018-11-05","currentAmt":465000.0,"inst":93.0},{"code":468,"account":"4252479133","name":"ASHA","aslass":"005873","amount":1000.0,"nextDue":"2026-08-10","opening":"2019-01-10","currentAmt":91000.0,"inst":91.0},{"code":469,"account":"020218973997","name":"POOJA","aslass":null,"amount":3000.0,"nextDue":"2026-07-07","opening":"2026-05-07","currentAmt":6000.0,"inst":2.0},{"code":470,"account":"4403771758","name":"KAMLESH KUMARI BANSAL","aslass":"89883","amount":5000.0,"nextDue":"2026-08-18","opening":"2019-04-18","currentAmt":440000.0,"inst":88.0},{"code":471,"account":"020167773072","name":"RITIK","aslass":"29774","amount":3000.0,"nextDue":"2026-08-24","opening":"2025-07-24","currentAmt":39000.0,"inst":13.0},{"code":472,"account":"4436340419","name":"SUMANDWIVEDI","aslass":"021002","amount":1000.0,"nextDue":"2026-07-24","opening":"2019-05-24","currentAmt":86000.0,"inst":86.0},{"code":473,"account":"4444991573","name":"AAYANSH","aslass":"062278","amount":1000.0,"nextDue":"2026-08-01","opening":"2019-06-01","currentAmt":86000.0,"inst":86.0},{"code":474,"account":"4480856539","name":"DINESH TANEJA","aslass":"021011","amount":5000.0,"nextDue":"2026-08-09","opening":"2019-07-09","currentAmt":425000.0,"inst":85.0},{"code":475,"account":"4480876353","name":"MADHU TANEJA","aslass":"21012","amount":5000.0,"nextDue":"2026-08-09","opening":"2019-07-09","currentAmt":425000.0,"inst":85.0},{"code":476,"account":"4513219874","name":"KRISHANA DEVI","aslass":"020326","amount":3000.0,"nextDue":"2026-08-06","opening":"2019-08-06","currentAmt":252000.0,"inst":84.0},{"code":477,"account":"4521033639","name":"JANKI DEVI","aslass":"020327","amount":2000.0,"nextDue":"2026-08-17","opening":"2019-08-17","currentAmt":168000.0,"inst":84.0},{"code":478,"account":"4521049029","name":"URMILA DEVI","aslass":"020328","amount":2000.0,"nextDue":"2026-08-17","opening":"2019-08-17","currentAmt":168000.0,"inst":84.0},{"code":479,"account":"4584427437","name":"RITA GUPTA","aslass":"096231","amount":1000.0,"nextDue":"2026-10-17","opening":"2019-10-17","currentAmt":84000.0,"inst":84.0},{"code":480,"account":"4584545308","name":"ALPA GUPTA","aslass":"096229","amount":1500.0,"nextDue":"2026-10-17","opening":"2019-10-17","currentAmt":126000.0,"inst":84.0},{"code":481,"account":"4584610433","name":"BHARTI CHHABRA","aslass":"96487","amount":2000.0,"nextDue":"2026-07-17","opening":"2019-10-17","currentAmt":162000.0,"inst":81.0},{"code":482,"account":"4598418247","name":"DEEPAK BANSAL","aslass":"96235","amount":1000.0,"nextDue":"2026-07-30","opening":"2019-10-30","currentAmt":81000.0,"inst":81.0},{"code":483,"account":"4612761168","name":"SARIKA NAG","aslass":"008569","amount":13000.0,"nextDue":"2026-08-15","opening":"2019-11-15","currentAmt":1053000.0,"inst":81.0},{"code":484,"account":"4612762462","name":"SARIKA NAG","aslass":"0047692","amount":13000.0,"nextDue":"2026-08-15","opening":"2019-11-15","currentAmt":1053000.0,"inst":81.0},{"code":485,"account":"020179733514","name":"NIKHIL KHEMKA","aslass":"055700","amount":500.0,"nextDue":"2026-07-24","opening":"2025-10-24","currentAmt":4500.0,"inst":9.0},{"code":486,"account":"4643588741","name":"RAJINDER KUMAR","aslass":"020332","amount":2000.0,"nextDue":"2026-08-11","opening":"2019-12-11","currentAmt":160000.0,"inst":80.0},{"code":487,"account":"4653299774","name":"VIBHA MISHRA","aslass":"097510","amount":1000.0,"nextDue":"2026-08-19","opening":"2019-12-19","currentAmt":80000.0,"inst":80.0},{"code":488,"account":"4659679914","name":"DINESH TANEJA","aslass":"043081","amount":3000.0,"nextDue":"2026-08-26","opening":"2019-12-26","currentAmt":240000.0,"inst":80.0},{"code":489,"account":"4659782713","name":"SONIA RANI","aslass":"82991","amount":2000.0,"nextDue":"2026-06-26","opening":"2019-12-26","currentAmt":156000.0,"inst":78.0},{"code":490,"account":"4661171178","name":"PRIYANSH KHEMKA","aslass":"044606","amount":500.0,"nextDue":"2026-07-27","opening":"2019-12-27","currentAmt":39500.0,"inst":79.0},{"code":491,"account":"020180880739","name":"MANJU BANSAL","aslass":"00001","amount":1000.0,"nextDue":"2026-07-31","opening":"2025-10-31","currentAmt":9000.0,"inst":9.0},{"code":492,"account":"020220242012","name":"PREETY","aslass":null,"amount":1500.0,"nextDue":"2026-07-18","opening":"2026-05-18","currentAmt":3000.0,"inst":2.0},{"code":493,"account":"4721513764","name":"KAVITA","aslass":"097520","amount":1000.0,"nextDue":"2026-08-12","opening":"2020-02-12","currentAmt":78000.0,"inst":78.0},{"code":494,"account":"4721519810","name":"MANJU GOYAL","aslass":"97519","amount":1000.0,"nextDue":"2026-08-12","opening":"2020-02-12","currentAmt":78000.0,"inst":78.0},{"code":495,"account":"020220435946","name":"KIRAN GARG","aslass":"368190","amount":2000.0,"nextDue":"2026-08-19","opening":"2026-05-19","currentAmt":6000.0,"inst":3.0},{"code":496,"account":"4740957822","name":"RIYA GUPTA","aslass":"097529","amount":3000.0,"nextDue":"2026-08-26","opening":"2020-02-26","currentAmt":234000.0,"inst":78.0},{"code":497,"account":"020183394855","name":"RITIK","aslass":"55704","amount":1000.0,"nextDue":"2026-08-19","opening":"2025-11-19","currentAmt":9000.0,"inst":9.0},{"code":498,"account":"020169529660","name":"KHAYATI GROVER","aslass":"016507","amount":500.0,"nextDue":"2026-07-13","opening":"2025-08-13","currentAmt":5500.0,"inst":11.0},{"code":499,"account":"4821372919","name":"SHAKUNTLA DEVI","aslass":"095786","amount":2500.0,"nextDue":"2026-07-24","opening":"2020-06-24","currentAmt":182500.0,"inst":73.0},{"code":500,"account":"020181512401","name":"MITALI","aslass":"055702","amount":1000.0,"nextDue":"2026-08-07","opening":"2025-11-07","currentAmt":9000.0,"inst":9.0},{"code":501,"account":"020221921401","name":"RENU CHAWLA","aslass":null,"amount":5000.0,"nextDue":"2026-07-27","opening":"2026-05-27","currentAmt":10000.0,"inst":2.0},{"code":502,"account":"020192827802","name":"KARAMVIR GAUTAM","aslass":"041852","amount":10000.0,"nextDue":"2026-08-12","opening":"2026-01-12","currentAmt":70000.0,"inst":7.0},{"code":503,"account":"020172578635","name":"BHOOP SINGH","aslass":"016512","amount":5500.0,"nextDue":"2026-08-04","opening":"2025-09-04","currentAmt":60500.0,"inst":11.0},{"code":504,"account":"020221966590","name":"SONU","aslass":null,"amount":1000.0,"nextDue":"2026-07-27","opening":"2026-05-27","currentAmt":2000.0,"inst":2.0},{"code":505,"account":"020173579410","name":"SUDHA DEVI","aslass":"055693","amount":5000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":55000.0,"inst":11.0},{"code":506,"account":"020181512578","name":"NEHA RANI","aslass":"055701","amount":5000.0,"nextDue":"2026-11-07","opening":"2025-11-07","currentAmt":60000.0,"inst":12.0},{"code":507,"account":"020182168936","name":"BANARSI DEVI","aslass":"55708","amount":5000.0,"nextDue":"2026-08-12","opening":"2025-11-12","currentAmt":45000.0,"inst":9.0},{"code":508,"account":"020221967452","name":"SEEMA SHARMA","aslass":null,"amount":1000.0,"nextDue":"2026-07-27","opening":"2026-05-27","currentAmt":2000.0,"inst":2.0},{"code":509,"account":"020173579487","name":"ROHIT","aslass":"055697","amount":2500.0,"nextDue":"2026-07-12","opening":"2025-09-12","currentAmt":25000.0,"inst":10.0},{"code":510,"account":"020173579716","name":"MAHAVIR","aslass":"055692","amount":5000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":55000.0,"inst":11.0},{"code":511,"account":"020173581198","name":"RAM NIWASH SHARAM","aslass":"016519","amount":5000.0,"nextDue":"2026-07-12","opening":"2025-09-12","currentAmt":50000.0,"inst":10.0},{"code":512,"account":"020221969390","name":"SEEMA SHARMA","aslass":null,"amount":1000.0,"nextDue":"2026-07-27","opening":"2026-05-27","currentAmt":2000.0,"inst":2.0},{"code":513,"account":"020221969673","name":"SEEMA SHARMA","aslass":null,"amount":1000.0,"nextDue":"2026-07-27","opening":"2026-05-27","currentAmt":2000.0,"inst":2.0},{"code":514,"account":"020223589041","name":"AJAY BANSAL","aslass":null,"amount":5000.0,"nextDue":"2026-08-08","opening":"2026-06-08","currentAmt":10000.0,"inst":2.0},{"code":515,"account":"020227088621","name":"AKSHAY","aslass":null,"amount":1000.0,"nextDue":"2026-07-27","opening":"2026-06-27","currentAmt":1000.0,"inst":1.0},{"code":522,"account":"020173581406","name":"RAMESH SHARMA","aslass":"016517","amount":5000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":55000.0,"inst":11.0},{"code":523,"account":"020173581865","name":"RAJNI DEVI","aslass":"016518","amount":4000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":44000.0,"inst":11.0},{"code":524,"account":"020173582553","name":"SWATI","aslass":"016520","amount":2000.0,"nextDue":"2026-08-12","opening":"2025-09-12","currentAmt":22000.0,"inst":11.0}];
+</script>
+<script>
+(function(){
+  "use strict";
+
+  const OVERRIDES_KEY = "client-overrides-v1";
+  let overrides = {}; // { [code]: {nextDue, inst, collections:[{date,amount,note}]} }
+  let storageReady = false;
+
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  function fmtDate(iso){
+    if(!iso) return null;
+    const d = new Date(iso+"T00:00:00");
+    if(isNaN(d)) return null;
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  function fmtMoney(n){
+    if(n==null) return "—";
+    return "₹" + Math.round(n).toLocaleString('en-IN');
+  }
+  function addMonths(iso, n){
+    const d = new Date(iso+"T00:00:00");
+    d.setMonth(d.getMonth()+n);
+    return d.toISOString().slice(0,10);
+  }
+  function daysUntil(iso){
+    if(!iso) return null;
+    const d = new Date(iso+"T00:00:00");
+    return Math.round((d - today) / 86400000);
+  }
+  function statusOf(iso){
+    if(!iso) return "unset";
+    const du = daysUntil(iso);
+    if(du < 0) return "overdue";
+    if(du <= 7) return "soon";
+    return "ok";
+  }
+  function statusLabel(s, iso){
+    if(s==="unset") return "No date";
+    if(s==="overdue") return `Overdue ${Math.abs(daysUntil(iso))}d`;
+    if(s==="soon") return daysUntil(iso)===0 ? "Due today" : `Due in ${daysUntil(iso)}d`;
+    return "Scheduled";
+  }
+
+  function effectiveClient(base){
+    const o = overrides[base.code];
+    return {
+      ...base,
+      nextDue: (o && o.nextDue !== undefined) ? o.nextDue : base.nextDue,
+      inst: (o && o.inst !== undefined) ? o.inst : base.inst,
+    };
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  async function loadOverrides(){
+    try{
+      const res = await window.storage.get(OVERRIDES_KEY, false);
+      overrides = res && res.value ? JSON.parse(res.value) : {};
+    }catch(e){
+      overrides = {};
+    }
+    storageReady = true;
+    document.getElementById('storageNote').textContent =
+      "Payment records and due-date edits are saved privately to your account and persist across visits.";
+  }
+
+  async function saveOverrides(){
+    try{
+      await window.storage.set(OVERRIDES_KEY, JSON.stringify(overrides), false);
+    }catch(e){
+      showToast("⚠ Could not save — storage error");
+    }
+  }
+
+  // ---------- Rendering ----------
+  let sortKey = "due-asc";
+  let statusFilterVal = "all";
+  let searchVal = "";
+
+  function getFiltered(){
+    let list = CLIENTS_DATA.map(effectiveClient);
+    if(searchVal){
+      const q = searchVal.toLowerCase();
+      list = list.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.account.includes(q) ||
+        String(c.code).includes(q) ||
+        (c.aslass||"").includes(q)
+      );
+    }
+    if(statusFilterVal !== "all"){
+      list = list.filter(c => statusOf(c.nextDue) === statusFilterVal);
+    }
+    list.forEach(c => c._status = statusOf(c.nextDue));
+
+    const [key, dir] = sortKey.split("-");
+    list.sort((a,b) => {
+      let av, bv;
+      if(key==="due"){
+        av = a.nextDue || "9999-99-99"; bv = b.nextDue || "9999-99-99";
+      } else if(key==="name"){
+        av = a.name; bv = b.name;
+      } else if(key==="amount"){
+        av = a.amount; bv = b.amount;
+      } else if(key==="code"){
+        av = a.code; bv = b.code;
+      }
+      if(av < bv) return dir==="asc" ? -1 : 1;
+      if(av > bv) return dir==="asc" ? 1 : -1;
+      return 0;
+    });
+    return list;
+  }
+
+  function renderStats(){
+    const all = CLIENTS_DATA.map(effectiveClient);
+    const overdue = all.filter(c => statusOf(c.nextDue)==="overdue");
+    const soon = all.filter(c => statusOf(c.nextDue)==="soon");
+    const unset = all.filter(c => statusOf(c.nextDue)==="unset");
+    const overdueAmt = overdue.reduce((s,c)=>s+c.amount,0);
+    const soonAmt = soon.reduce((s,c)=>s+c.amount,0);
+
+    const thisMonth = todayISO().slice(0,7);
+    let collectedThisMonth = 0, collectedCount = 0;
+    Object.values(overrides).forEach(o=>{
+      (o.collections||[]).forEach(c=>{
+        if(c.date && c.date.slice(0,7)===thisMonth){
+          collectedThisMonth += c.amount;
+          collectedCount++;
+        }
+      });
+    });
+
+    const stats = [
+      {label:"Total clients", num: all.length, cls:""},
+      {label:"Overdue", num: `${overdue.length} · ${fmtMoney(overdueAmt)}`, cls:"overdue"},
+      {label:"Due within 7 days", num: `${soon.length} · ${fmtMoney(soonAmt)}`, cls:"soon"},
+      {label:"No date set", num: unset.length, cls:""},
+      {label:"Collected this month", num: `${fmtMoney(collectedThisMonth)}`, cls:"brass"},
+      {label:"Payments logged this month", num: collectedCount, cls:"ok"},
+    ];
+    document.getElementById('statsRow').innerHTML = stats.map(s => `
+      <div class="stat ${s.cls}">
+        <div class="num">${s.num}</div>
+        <div class="label">${s.label}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderTable(){
+    const list = getFiltered();
+    document.getElementById('resultCount').textContent = `${list.length} of ${CLIENTS_DATA.length} clients`;
+    const tbody = document.getElementById('tbody');
+    document.getElementById('emptyNote').style.display = list.length ? "none" : "block";
+
+    tbody.innerHTML = list.map(c => {
+      const st = c._status;
+      const dueVal = c.nextDue || "";
+      return `
+      <tr class="status-${st}" data-code="${c.code}">
+        <td class="mono">${c.code}</td>
+        <td class="name">${escapeHtml(c.name)}</td>
+        <td class="mono">${c.account}</td>
+        <td class="num">${fmtMoney(c.amount)}</td>
+        <td class="num">${c.inst != null ? c.inst : "—"}</td>
+        <td><input type="date" class="due-edit" value="${dueVal}" data-code="${c.code}"></td>
+        <td><span class="pill ${st}">${statusLabel(st, c.nextDue)}</span></td>
+        <td>
+          <div class="rowactions">
+            <button class="btn small collect-btn" data-code="${c.code}">Mark collected</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join("");
+
+    tbody.querySelectorAll('.due-edit').forEach(inp=>{
+      inp.addEventListener('change', onDueEdit);
+    });
+    tbody.querySelectorAll('.collect-btn').forEach(btn=>{
+      btn.addEventListener('click', () => openCollectModal(Number(btn.dataset.code)));
+    });
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  async function onDueEdit(e){
+    const code = Number(e.target.dataset.code);
+    const val = e.target.value;
+    overrides[code] = overrides[code] || {};
+    overrides[code].nextDue = val || null;
+    await saveOverrides();
+    renderStats();
+    renderTable();
+    showToast("Next due date updated");
+  }
+
+  // ---------- Collect modal ----------
+  let activeCollectCode = null;
+  function openCollectModal(code){
+    activeCollectCode = code;
+    const base = CLIENTS_DATA.find(c=>c.code===code);
+    const c = effectiveClient(base);
+    document.getElementById('collectSub').textContent = `${c.name} · Acct ${c.account} · Code ${c.code}`;
+    document.getElementById('collectAmount').value = c.amount;
+    document.getElementById('collectDate').value = todayISO();
+    document.getElementById('collectNote').value = "";
+    document.getElementById('collectOverlay').classList.add('show');
+  }
+  function closeCollectModal(){
+    document.getElementById('collectOverlay').classList.remove('show');
+    activeCollectCode = null;
+  }
+
+  async function confirmCollect(){
+    if(activeCollectCode==null) return;
+    const code = activeCollectCode;
+    const base = CLIENTS_DATA.find(c=>c.code===code);
+    const cur = effectiveClient(base);
+    const amount = parseFloat(document.getElementById('collectAmount').value) || 0;
+    const date = document.getElementById('collectDate').value || todayISO();
+    const note = document.getElementById('collectNote').value.trim();
+
+    overrides[code] = overrides[code] || {};
+    const o = overrides[code];
+    o.collections = o.collections || [];
+    o.collections.push({date, amount, note, name: cur.name, account: cur.account});
+
+    // advance next due by 1 month from the due date that was just paid (or from paid date if none set)
+    const basis = cur.nextDue || date;
+    o.nextDue = addMonths(basis, 1);
+    if(cur.inst != null){
+      o.inst = Math.max(0, cur.inst - 1);
+    }
+
+    await saveOverrides();
+    closeCollectModal();
+    renderStats();
+    renderTable();
+    showToast(`Payment of ${fmtMoney(amount)} recorded for ${cur.name}`);
+  }
+
+  // ---------- History ----------
+  function renderHistory(){
+    const entries = [];
+    Object.entries(overrides).forEach(([code,o])=>{
+      (o.collections||[]).forEach(c => entries.push({...c, code}));
+    });
+    entries.sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+    const list = document.getElementById('historyList');
+    if(!entries.length){
+      list.innerHTML = `<div class="empty-note">No payments recorded yet.</div>`;
+      return;
+    }
+    list.innerHTML = entries.map(e => `
+      <div class="hist-row">
+        <div>
+          <div class="h-name">${escapeHtml(e.name||('Code '+e.code))}</div>
+          <div class="h-meta">${fmtDate(e.date)} · Acct ${e.account||''} ${e.note ? '· '+escapeHtml(e.note) : ''}</div>
+        </div>
+        <div class="h-amt">${fmtMoney(e.amount)}</div>
+      </div>
+    `).join("");
+  }
+
+  // ---------- Export ----------
+  function exportCSV(){
+    const list = getFiltered();
+    const rows = [["Code","Name","Account","ASLASS","Installment","Remaining","NextDue","Status"]];
+    list.forEach(c => rows.push([c.code,c.name,c.account,c.aslass||"",c.amount,c.inst,c.nextDue||"",statusLabel(c._status,c.nextDue)]));
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `collections-${todayISO()}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Offline backup / restore ----------
+  function downloadBackup(){
+    const payload = {
+      type: "collections-ledger-backup",
+      version: 1,
+      savedAt: new Date().toISOString(),
+      clientCount: CLIENTS_DATA.length,
+      overrides: overrides
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `collections-backup-${todayISO()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Backup file downloaded — keep it safe for offline restore");
+  }
+
+  function triggerRestore(){
+    document.getElementById('restoreFile').click();
+  }
+
+  async function handleRestoreFile(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const incoming = parsed && parsed.overrides ? parsed.overrides : null;
+      if(!incoming || typeof incoming !== "object"){
+        showToast("⚠ That file doesn't look like a valid backup");
+        return;
+      }
+      overrides = incoming;
+      await saveOverrides();
+      renderStats();
+      renderTable();
+      const when = parsed.savedAt ? new Date(parsed.savedAt).toLocaleString() : "unknown time";
+      showToast(`Backup restored (saved ${when})`);
+    }catch(err){
+      showToast("⚠ Could not read that file — is it a backup JSON?");
+    }finally{
+      e.target.value = "";
+    }
+  }
+
+  document.getElementById('backupBtn').addEventListener('click', downloadBackup);
+  document.getElementById('restoreBtn').addEventListener('click', triggerRestore);
+  document.getElementById('restoreFile').addEventListener('change', handleRestoreFile);
+
+  // ---------- Sorting via header click ----------
+  document.querySelectorAll('thead th[data-key]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if(key==="due"){ sortKey = sortKey==="due-asc" ? "due-desc" : "due-asc"; }
+      else if(key==="name"){ sortKey = "name-asc"; }
+      else if(key==="amount"){ sortKey = "amount-desc"; }
+      else if(key==="code"){ sortKey = "code-asc"; }
+      else if(key==="inst"){ sortKey = "amount-desc"; }
+      document.getElementById('sortSelect').value = sortKey;
+      renderTable();
+    });
+  });
+
+  document.getElementById('sortSelect').addEventListener('change', e=>{
+    sortKey = e.target.value; renderTable();
+  });
+  document.getElementById('statusFilter').addEventListener('change', e=>{
+    statusFilterVal = e.target.value; renderTable();
+  });
+  document.getElementById('search').addEventListener('input', e=>{
+    searchVal = e.target.value.trim(); renderTable();
+  });
+  document.getElementById('collectCancel').addEventListener('click', closeCollectModal);
+  document.getElementById('collectConfirm').addEventListener('click', confirmCollect);
+  document.getElementById('collectOverlay').addEventListener('click', e=>{
+    if(e.target.id==='collectOverlay') closeCollectModal();
+  });
+  document.getElementById('historyBtn').addEventListener('click', ()=>{
+    renderHistory();
+    document.getElementById('historyOverlay').classList.add('show');
+  });
+  document.getElementById('historyClose').addEventListener('click', ()=>{
+    document.getElementById('historyOverlay').classList.remove('show');
+  });
+  document.getElementById('historyOverlay').addEventListener('click', e=>{
+    if(e.target.id==='historyOverlay') e.currentTarget.classList.remove('show');
+  });
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+  document.getElementById('todayLabel').innerHTML =
+    `Ledger opened<br>${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}`;
+
+  // ---------- Init ----------
+  (async function init(){
+    await loadOverrides();
+    renderStats();
+    renderTable();
+  })();
+})();
+</script>
+</body>
+</html>
